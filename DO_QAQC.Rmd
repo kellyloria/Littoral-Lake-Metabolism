@@ -1,0 +1,34 @@
+---
+title: "Data aggregation of all miniDOT data from the Near shore of Lake Tahoe cinder blocks"
+"
+output: html_document
+author: "Kelly Loria"
+date: '2023-03-02'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE}
+options(width = 200)
+knitr::opts_chunk$set(include = TRUE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 8)
+```
+
+```{r, results = "hide"}
+
+lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
+         "tidyverse","data.table","xts","dygraphs",
+         "nrlmetab","cowplot"), require, character.only=T) 
+
+# Kelly's path while working...
+setwd("~/Users/kellyloria/Documents/LittoralMetabModeling/AggRawData/")
+
+#read in multiple .csv
+BWNS_raw = read.csv('./data/WeatherData.csv', skip = 3)
+head(cov_df)
+cov_df$Date<-as.Date(cov_df$Date, format='%m/%d/%y')
+
+data = read.csv("./data/2013_data.csv")
+data$Date<-as.Date(data$Date, format='%m/%d/%y')
+```
