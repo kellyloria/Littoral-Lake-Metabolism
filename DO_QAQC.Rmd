@@ -1,9 +1,14 @@
 ---
 title: "Data aggregation of all miniDOT data from the Near shore of Lake Tahoe cinder blocks"
-"
-output: html_document
+
+output:
+  html_document:
+    fig_width: 6
+    fig_height: 4
+
+
 author: "Kelly Loria"
-date: '2023-03-02'
+date: "2023-03-02"
 ---
 
 ```{r setup, include=FALSE}
@@ -22,13 +27,103 @@ lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
          "nrlmetab","cowplot"), require, character.only=T) 
 
 # Kelly's path while working...
-setwd("~/Users/kellyloria/Documents/LittoralMetabModeling/AggRawData/")
 
-#read in multiple .csv
-BWNS_raw = read.csv('./data/WeatherData.csv', skip = 3)
-head(cov_df)
-cov_df$Date<-as.Date(cov_df$Date, format='%m/%d/%y')
+## MiniDOT sensors - Glenbrook
+GBNS1 <- read.csv("./AggRawData/AggregatedDO/GBNS1.csv", header=T)
+GBNS2 <- read.csv("./AggRawData/AggregatedDO/GBNS2.csv", header=T)
+GBNS3 <- read.csv("./AggRawData/AggregatedDO/GBNS3.csv", header=T)
 
-data = read.csv("./data/2013_data.csv")
-data$Date<-as.Date(data$Date, format='%m/%d/%y')
+## MiniDOT sensors - Blackwood
+BWNS1 <- read.csv("./AggRawData/AggregatedDO/BWNS1.csv", header=T)
+BWNS2 <- read.csv("./AggRawData/AggregatedDO/BWNS2.csv", header=T)
+BWNS3 <- read.csv("./AggRawData/AggregatedDO/BWNS3.csv", header=T)
+
+## Weather station
+east_ws <- read.csv("./AggRawData/Climate/EastNSclimate.csv")
+west_ws <- read.csv("./AggRawData/Climate/WestNSclimate.csv")
+
+```
+
+```{r}
+## Adjust miniDOT data
+miniDOT_adj <- function(x){
+  
+  df <- x %>% dplyr::select(timestamp, DO, Temp, site) %>%
+    dplyr::rename(datetime = timestamp, do.obs = DO, wtr = Temp, site = site) %>%
+    mutate(datetime = as.POSIXct((datetime), format ="%Y-%m-%d %H:%M:%S"))
+  
+  return(df)
+}
+```
+
+```{r}
+# Glenbrook sensors
+GS1 <- miniDOT_adj(GBNS1)
+GS2 <- miniDOT_adj(GBNS2)
+GS3 <- miniDOT_adj(GBNS3)
+
+# Blackwood sensors
+BS1 <- miniDOT_adj(BWNS1)
+BS2 <- miniDOT_adj(BWNS2)
+BS3 <- miniDOT_adj(BWNS3)
+```
+
+```{r}
+## Adjust climate data
+climate_adj <- function(x){
+  
+  ## rename and convert solar_rad to PAR
+  c <- x %>% 
+    dplyr::rename(datetime = Date_Time, solar_rad = solar_radiation_set_1, wspeed = wind_speed_set_1) %>%
+    mutate(datetime = as.POSIXct((datetime), format ="%Y-%m-%d %H:%M:%S")) %>%
+    mutate(par = solar_rad*2.114) %>%
+    dplyr::select(datetime, par, wspeed)
+  
+  ## take the mean each hour
+  c <- c %>%
+    group_by(datetime = floor_date(datetime, "hour")) %>%
+    summarise(par = mean(par, na.rm = TRUE), wspeed = mean(wspeed, na.rm = TRUE))
+  
+  ## adjust datetime from UTC to local PT time
+  c$datetime <- c$datetime - hours(8)
+  
+  return(c)
+}
+```
+
+```{r}
+# east_clim <- climate_adj(east_ws)
+# west_clim <- climate_adj(west_ws)
+```
+
+```{r, include=FALSE}
+## DO -- subset to time frame of interest & plot
+vis_data_DO <- function(x){
+  
+  x <- subset(x, x$datetime < "2023-01-01 00:00:00")
+  
+  # Then you can create the xts format, and thus use dygraph
+  dat <- xts(x = x$do.obs, order.by = x$datetime)
+  
+  # Make the chart
+  p <- dygraph(dat)
+  p
+  
+}
+```
+
+```{r, include=FALSE, results = "hide"}
+## GS1 DO corrections
+vis_data_DO(GS1)
+GS1_adj <- GS1[-which(GS1$datetime >= "2021-10-29 11:30:00" & GS1$datetime <= "2021-10-29 14:00:00"),]
+GS1_adj <- GS1[-which(GS1$datetime >= "2022-04-05 00:00:00" & GS1$datetime <= "2022-05-25 00:00:00"),]
+vis_data_DO(GS1_adj)
+```
+
+
+```{r}
+## GS1 DO corrections
+vis_data_DO(GS2)
+GS2_adj <- GS2[-which(GS2$datetime >= "2022-04-05 00:00:00" & GS2$datetime <= "2022-05-25 00:00:00"),]
+vis_data_DO(GS2_adj)
 ```
