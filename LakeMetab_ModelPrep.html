@@ -372,7 +372,6 @@ pre code {
 
 <div id="this-is-one-of-x-scripts-to-look-at-do-output-as-a-timesieries." class="section level3">
 <h3>This is one of X scripts to look at DO output as a timesieries.</h3>
-<p>Reading in the data:</p>
 <pre class="r"><code>lapply(c(&quot;plyr&quot;,&quot;dplyr&quot;,&quot;ggplot2&quot;,&quot;cowplot&quot;,&quot;lubridate&quot;,
          &quot;tidyverse&quot;,&quot;data.table&quot;,&quot;xts&quot;,&quot;dygraphs&quot;,
          &quot;nrlmetab&quot;,&quot;cowplot&quot;), require, character.only=T)
@@ -380,7 +379,7 @@ pre code {
 source(&quot;k.vachon.R&quot;)
 source(&quot;k600.2.kGAS.R&quot;)
 source(&quot;getSchmidt.R&quot;)</code></pre>
-<p>Import Step 1 processed data</p>
+<p>Reading in processed data from DO_QAQC.r</p>
 <pre class="r"><code>## 2021 ##
 # BS1_dat &lt;- read.csv(&quot;./Step1_LakeMetab_Processed/21BWNS1Inputs.csv&quot;, header=T)
 # BS2_dat &lt;- read.csv(&quot;./Step1_LakeMetab_Processed/21BWNS2Inputs.csv&quot;, header=T)
