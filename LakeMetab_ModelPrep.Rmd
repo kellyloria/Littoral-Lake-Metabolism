@@ -20,9 +20,9 @@ lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
          "tidyverse","data.table","xts","dygraphs",
          "nrlmetab","cowplot"), require, character.only=T)
 
-source("k.vachon.R")
-source("k600.2.kGAS.R")
-source("getSchmidt.R")
+source("./saved_fxns/k.vachon.R")
+source("./saved_fxns/k600.2.kGAS.R")
+source("./saved_fxns/getSchmidt.R")
 ```
 
 Reading in processed data from DO_QAQC.r

@@ -1,0 +1,3 @@
+load("/Users/kellyloria/Desktop/Kelly/stan/o2_model_inhibition.rds")
+load("/Users/kellyloria/Desktop/LakeTahoeNS/stan/o2_model_inhibition.rds")
+load("/Users/kellyloria/Desktop/LakeTahoeNS/stan/o2_model_inhibition.rds")

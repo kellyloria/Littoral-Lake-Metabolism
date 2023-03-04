@@ -28,8 +28,8 @@ lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
          "tidyverse","data.table","xts","dygraphs",
          "nrlmetab","cowplot"), require, character.only=T)
 
-source("LM.o2.at.sat.R")
-source("LM.wind.scale.R")
+source("./saved_fxns/LM.o2.at.sat.R")
+source("./saved_fxns/LM.wind.scale.R")
 
 ## MiniDOT sensors - Glenbrook
 GBNS1 <- read.csv("./AggRawData/AggregatedDO/GBNS1.csv", header=T)
