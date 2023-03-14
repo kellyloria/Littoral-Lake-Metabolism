@@ -1,14 +1,13 @@
 ---
-title: "Data aggregation of all miniDOT data from the Near shore of Lake Tahoe cinder blocks"
-
+title: Data aggregation of all miniDOT data from the Near shore of Lake Tahoe cinder
+  blocks
+author: "Kelly Loria"
+date: '2023-03-02'
 output:
   html_document:
     fig_width: 6
     fig_height: 4
-
-
-author: "Kelly Loria"
-date: "2023-03-02"
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -20,7 +19,7 @@ options(width = 200)
 knitr::opts_chunk$set(include = TRUE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 8)
 ```
 
-### This is one of X scripts to look at DO output as a timesieries. 
+### This is the first of two organizational scripts to look at DO output as a timesieries. 
 Reading in the data:
 ```{r, results = "hide"}
 
