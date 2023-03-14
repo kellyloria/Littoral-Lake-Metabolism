@@ -530,13 +530,13 @@ r.squaredGLMM(mod1)
 
 ## STREAM PLOT
 
-BWL <- read.csv("./plotDat/BWL_daily.csv")
+BWL <- read.csv("./BWL_daily.csv")
 BWL$date <- as.Date(BWL$date, origin="2021-01-01")
 BWL$site <- "BWL"
 BWL$shore <- "west"
 
 
-GBL <- read.csv("./plotDat/GBL_daily.csv")
+GBL <- read.csv("./GBL_daily.csv")
 GBL$date <- as.Date(GBL$date, origin="2021-01-01")
 GBL$site <- "GBL"
 GBL$shore <- "east"
@@ -576,7 +576,7 @@ Wplot_sp <- ggplot(BWL, aes(x = GPP_mean, y = ER_mean)) + ylab("Ecosystem respir
 
 
 BWL$NEP<- BWL$GPP_daily_mean + BWL$ER_daily_mean
-#BWL$NEP_sd<- BWL$GPP_se_mean - BWL$ER_daily_se_mean
+BWL$NEP_sd<- sd(BWL$GPP_daily_mean + BWL$ER_daily_mean)
 
 GBL$NEP<- GBL$GPP_daily_mean + GBL$ER_daily_mean
 
@@ -584,25 +584,58 @@ names(GBL)
 
 streamNEP <- rbind(GBL, BWL)
 
-StreamNEPplot <- ggplot(data = streamNEP, aes(date, NEP, color = shore))+
-  geom_hline(yintercept = 0, size = 0.3, color = "gray50")+
-  # geom_ribbon(aes(ymin = ER_sd, ymax = GPP_sd, fill = shore),
-  #             linetype = 0, alpha = 0.2)+
-  #geom_line()+ 
-  geom_point(size= 3, alpha = 0.6)+
+StreamGPPplot <- ggplot(data = streamNEP, aes(date, GPP_daily_mean, color = shore))+
+  geom_hline(yintercept = 0, size = 0.3, color = "gray50") +
+  geom_point(size= 1, alpha = 0.6) +
+  geom_line() +
+  geom_pointrange(aes(ymin =(GPP_2.5pct), 
+                      ymax = (GPP_97.5pct)), alpha = 0.75) +
   geom_vline(xintercept = as.numeric(as.Date("2022-01-01")),
              color = "#4c4d4c") +
   scale_color_manual(values=c("#a67d17", "#3283a8")) +
   scale_fill_manual(values = c("#a67d17", "#3283a8")) +
-  scale_x_date(date_breaks = "1 month", date_labels = "%b-%Y")+ #new
+  scale_x_date(date_breaks = "3 month", date_labels = "%b-%Y")+ #new
   scale_y_continuous(breaks = seq(-30, 25, by = 5))+
-  labs(y=expression(mmol~O[2]~m^-3~d^-1)) + 
-  theme_classic() + 
+  labs(y=expression(GPPmmol~O[2]~m^-3~d^-1)) + 
+  theme_bw() + 
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=20),# new
+        legend.position = 'right')
+
+
+
+
+StreamERplot <- ggplot(data = streamNEP, aes(date, ER_daily_mean, color = shore))+
+  geom_hline(yintercept = 0, size = 0.3, color = "gray50") +
+  geom_point(size= 1, alpha = 0.6) +
+  geom_line() +
+  geom_pointrange(aes(ymin =(ER_2.5pct), 
+                      ymax = (ER_97.5pct)), alpha = 0.75) +
+  geom_vline(xintercept = as.numeric(as.Date("2022-01-01")),
+             color = "#4c4d4c") +
+  scale_color_manual(values=c("#a67d17", "#3283a8")) +
+  scale_fill_manual(values = c("#a67d17", "#3283a8")) +
+  scale_x_date(date_breaks = "3 month", date_labels = "%b-%Y")+ #new
+  scale_y_continuous(breaks = seq(-30, 25, by = 5))+
+  labs(y=expression(ERmmol~O[2]~m^-3~d^-1)) + 
+  theme_bw() + 
   theme(axis.text=element_text(size=18),
         axis.title=element_text(size=20),
-        axis.text.x=element_text(angle=60, hjust=1), # new
-        legend.position = 'right', 
-        legend.direction = "vertical")
+        legend.position = 'right')
+
+
+
+
+## total grid:
+NEP_grid <- ggarrange(StreamGPPplot,
+                       StreamERplot,
+                       ncol = 1, nrow = 2,
+                       common.legend = TRUE, 
+                       legend = "bottom")
+
+# save plot to figures folder
+#  ggsave(plot = NEP_grid, filename = paste("./NEP_grid.png",sep=""),width=8,height=6.5,dpi=300)
+
 
 
 # ggsave(plot = StreamNEPplot, filename = paste("./figures/SM_NEP_all.png",sep=""),width=9.5,height=6.5,dpi=300)

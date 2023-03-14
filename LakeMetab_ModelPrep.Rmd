@@ -1,8 +1,10 @@
 ---
 title: "LakeMetab_ModelPrep"
-output: html_document
 author: "Kelly Loria"
 date: '2023-03-04'
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +16,9 @@ options(width = 200)
 knitr::opts_chunk$set(include = TRUE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 8)
 ```
 
-### This is one of X scripts to look at DO output as a timesieries. 
+
+### This is the second of two organizational scripts to look at DO output as a timesieries. 
+
 ```{r, results = "hide"}
 lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
          "tidyverse","data.table","xts","dygraphs",
