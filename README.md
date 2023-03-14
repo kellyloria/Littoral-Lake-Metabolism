@@ -9,7 +9,7 @@ Modeling ecosystem energetics in the littoral or near shore of Lake Tahoe.
   - step 3 or model: deploys the lake analyzer model in stan.  
 
 ## Refs
-- Lotting2021: the paper that the mode was built for
-- Phillips2019: paper that our model was base on
-- Rose2009: best guess for par exction coeff data 
-
+- Lotting et al. 2021: Light transformations and mixing dynamic https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.1002/lom3.10471
+- Rose et al. 2009: best guess for par exction coeff data https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2008JG000816
+- Metabolism implementation - Scordo et al. 2022 https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2021WR031094)
+- Model structure - Phillips 2019: https://aslopubs.onlinelibrary.wiley.com/doi/10.1002/lno.11333
