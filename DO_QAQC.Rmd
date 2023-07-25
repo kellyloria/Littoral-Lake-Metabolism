@@ -31,14 +31,14 @@ source("./saved_fxns/LM.o2.at.sat.R")
 source("./saved_fxns/LM.wind.scale.R")
 
 ## MiniDOT sensors - Glenbrook
-GBNS1 <- read.csv("./AggRawData/AggregatedDO/GBNS1.csv", header=T)
-GBNS2 <- read.csv("./AggRawData/AggregatedDO/GBNS2.csv", header=T)
-GBNS3 <- read.csv("./AggRawData/AggregatedDO/GBNS3.csv", header=T)
+GBNS1 <- read.csv("./AggRawData/AggregatedDO/GBNS1_v2.csv", header=T)
+GBNS2 <- read.csv("./AggRawData/AggregatedDO/GBNS2_v2.csv", header=T)
+GBNS3 <- read.csv("./AggRawData/AggregatedDO/GBNS3_v2.csv", header=T)
 
 ## MiniDOT sensors - Blackwood
-BWNS1 <- read.csv("./AggRawData/AggregatedDO/BWNS1.csv", header=T)
-BWNS2 <- read.csv("./AggRawData/AggregatedDO/BWNS2.csv", header=T)
-BWNS3 <- read.csv("./AggRawData/AggregatedDO/BWNS3.csv", header=T)
+BWNS1 <- read.csv("./AggRawData/AggregatedDO/BWNS1_v2.csv", header=T)
+BWNS2 <- read.csv("./AggRawData/AggregatedDO/BWNS2_v2.csv", header=T)
+BWNS3 <- read.csv("./AggRawData/AggregatedDO/BWNS3_v2.csv", header=T)
 
 ## Weather station
 east_ws <- read.csv("./AggRawData/Climate/EastNSclimate.csv")
@@ -50,8 +50,8 @@ Adjusting output files for relevant columns:
 ## Adjust miniDOT data
 miniDOT_adj <- function(x){
   
-  df <- x %>% dplyr::select(timestamp, DO, Temp, site) %>%
-    dplyr::rename(datetime = timestamp, do.obs = DO, wtr = Temp, site = site) %>%
+  df <- x %>% dplyr::select(Pacific.Standard.Time, Dissolved.Oxygen, Temperature, site) %>%
+    dplyr::rename(datetime = Pacific.Standard.Time, do.obs = Dissolved.Oxygen, wtr = Temperature, site = site) %>%
     mutate(datetime = as.POSIXct((datetime), format ="%Y-%m-%d %H:%M:%S"))
   
   return(df)
@@ -93,6 +93,10 @@ vis_data_DO(GS1)
 GS1_adj <- GS1[-which(GS1$datetime >= "2021-10-29 11:30:00" & GS1$datetime <= "2021-10-29 14:00:00"),]
 GS1_adj <- GS1[-which(GS1$datetime >= "2022-04-05 00:00:00" & GS1$datetime <= "2022-05-25 00:00:00"),]
 vis_data_DO(GS1_adj)
+
+GS1_adj <- GS1_adj[-which(GS1_adj$datetime >= "2021-06-15 13:00:00" & GS1_adj$datetime <= "2021-06-17 13:00:00"),]
+vis_data_DO(GS1_adj)
+
 ```
 
 ```{r GS2 DO corrections}
@@ -100,13 +104,17 @@ vis_data_DO(GS1_adj)
 vis_data_DO(GS2)
 GS2_adj <- GS2[-which(GS2$datetime >= "2021-08-24 00:00:00" & GS2$datetime <= "2021-10-02 00:00:00"),]
 GS2_adj <- GS2_adj[-which(GS2_adj$datetime >= "2022-04-05 00:00:00" & GS2_adj$datetime <= "2022-05-25 00:00:00"),]
-vis_data_DO(BS2)
+vis_data_DO(GS2_adj)
 ```
 
 ```{r GS3 DO corrections}
 ## GS2 DO corrections
 vis_data_DO(GS3)
 GS3_adj <- GS3
+
+GS3_adj <- GS3_adj[-which(GS3_adj$datetime >= "2021-06-15 13:00:00" & GS3_adj$datetime <= "2021-06-17 13:00:00"),]
+vis_data_DO(GS3_adj)
+
 # none
 ```
 
@@ -121,12 +129,23 @@ BS1_adj <- BS1_adj[-which(BS1_adj$datetime >= "2021-09-26 00:00:00" & BS1_adj$da
 BS1_adj <- BS1_adj[-which(BS1_adj$datetime >= "2021-10-16 00:00:00" & BS1_adj$datetime <= "2021-10-26 00:00:00"),]
 BS1_adj <- BS1_adj[-which(BS1_adj$datetime >= "2022-03-28 00:00:00" & BS1_adj$datetime <= "2022-03-29 00:00:00"),]
 vis_data_DO(BS1_adj)
+BS1_adj <- BS1_adj[-which(BS1_adj$datetime >= "2021-10-14 10:00:00" & BS1_adj$datetime <= "2021-10-15 17:00:00"),]
+vis_data_DO(BS1_adj)
+BS1_adj <- BS1_adj[-which(BS1_adj$datetime >= "2021-06-15 13:00:00" & BS1_adj$datetime <= "2021-06-17 13:00:00"),]
+vis_data_DO(BS1_adj)
+
 ```
 
 ```{r BW2 DO corrections}
 ## GS2 DO corrections
 vis_data_DO(BS2)
 BS2_adj <- BS2
+
+BS2_adj <- BS2[-which(BS2$datetime >= "2021-06-15 00:00:00" & BS2$datetime <= "2021-06-17 12:00:00"),]
+vis_data_DO(BS2_adj)
+
+BS2_adj <- BS2_adj[-which(BS2_adj$datetime >= "2021-10-14 00:00:00" & BS2_adj$datetime <= "2021-10-15 18:00:00"),]
+vis_data_DO(BS2_adj)
 # none
 ```
 
@@ -135,6 +154,13 @@ BS2_adj <- BS2
 vis_data_DO(BS3)
 BS3_adj <- BS3[-which(BS3$datetime >= "2021-08-04 00:00:00" & BS3$datetime <= "2021-08-07 00:00:00"),]
 vis_data_DO(BS3_adj)
+
+BS3_adj <- BS3_adj[-which(BS3_adj$datetime >= "2021-06-15 00:00:00" & BS3_adj$datetime <= "2021-06-17 12:00:00"),]
+vis_data_DO(BS3_adj)
+
+BS3_adj <- BS3_adj[-which(BS3_adj$datetime >= "2021-10-14 00:00:00" & BS3_adj$datetime <= "2021-10-15 18:00:00"),]
+vis_data_DO(BS3_adj)
+
 ```
 
 Adjust weather station data for the appropriate variables 
