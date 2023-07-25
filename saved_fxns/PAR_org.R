@@ -10,8 +10,8 @@ WPAR = list.files(paste("/Users/kellyloria/Desktop/LakeTahoeNS/PAR_FA10B7CAD952_
   bind_rows()
 
 WPAR1 <- WPAR %>%
-  select(dateTime, data1, data2, loggerUid)%>%
-  rename(wtr = data2, PAR = data1, datetime=dateTime, sieral=loggerUid) %>%
+  dplyr::select(dateTime, data1, data2, loggerUid)%>%
+  dplyr::rename(wtr = data2, PAR = data1, datetime=dateTime, sieral=loggerUid) %>%
   mutate(datetime = as.POSIXct((datetime), format ="%d-%m-%Y %H:%M:%S"))
 
 
@@ -23,6 +23,9 @@ WPAR_plot <- qplot(datetime, PAR, data = WPAR1, geom="point", color =sieral, siz
   theme(axis.title.x=element_blank(),
         axis.text.x = element_text(angle = 45, hjust = 1))
 
+
+
+range(na.omit(WPAR1$datetime))
 
 
 WPAR2 <- WPAR1 %>% unique()
