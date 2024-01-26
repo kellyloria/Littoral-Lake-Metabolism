@@ -530,7 +530,7 @@ r.squaredGLMM(mod1)
 
 ## STREAM PLOT
 
-BWL <- read.csv("./BWL_daily.csv")
+BWL <- read.csv("/Users/kellyloria/Documents/LittoralMetabModeling/plotDat/BWL_daily.csv")
 BWL$date <- as.Date(BWL$date, origin="2021-01-01")
 BWL$site <- "BWL"
 BWL$shore <- "west"

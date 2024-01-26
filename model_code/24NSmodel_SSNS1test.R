@@ -1,5 +1,7 @@
 rm(list=ls())
 
+setwd("/Users/kellyloria/Documents/LittoralMetabModeling/Littoral-Lake-Metabolism")
+
 
 # load packages
 library(tidyverse)
@@ -9,25 +11,23 @@ library(patchwork)
 library(lubridate)
 library(shinystan)
 ## source
-source("stan_utility.R")
+source("/Users/kellyloria/Documents/LittoralMetabModeling/Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "BWNS1" 
+lake <- "SSNS1" 
 
 year <- c(2023)
 # stan settings
 options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
 # read data in
-data <- read_rdump(paste("/Users/kellyloria/Documents/LittoralMetabModeling/Sondefiles/BWNS1_sonde_list.R",sep=""))
+data <- read_rdump(paste("/Users/kellyloria/Documents/LittoralMetabModeling/Sondefiles/SSNS123test_sonde_list.R",sep=""))
 #
 str(data)
-
-dat_test <-  %>%
-  filter(days_per_year == 20) %>%
-  slice(1:20)
+mean(data$temp)
+data
 
 # set reference temperature
-data$temp_ref <- 13.4
+data$temp_ref <- 5.6
 ## add parameters that can be modified
 data$sig_b0 <- 0.01 #pmax smoothing parameter
 data$sig_r <- 0.01  #respiration smoothing parameter
@@ -35,12 +35,12 @@ data$sig_i0 <- 0.2  #light saturation smoothing parameter
 
 ## define model location
 model <- "o2_model_inhibition.stan" #Steele 2 param inhibition
-model_path <- paste0("./stan/",model)
+model_path <- paste0("/Users/kellyloria/Documents/LittoralMetabModeling/Littoral-Lake-Metabolism/stan/",model)
 
 # set specifications for stan
 chains <- 3 # was 6
-iter <-6000 #was 1000
-warmup <- 3000 #was 1000
+iter <-600 #was 1000
+warmup <- 300 #was 1000
 adapt_delta <- 0.99
 max_treedepth <- 15
 thin <- 1
