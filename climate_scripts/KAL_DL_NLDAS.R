@@ -1,8 +1,3 @@
-
-# API route ##
-# still need to put parameter requests
-
-
 #' Downloads NLDAS light data
 #' @description This function downloads NLDAS incoming shortwave radiation data
 #' (w m-2) for a given Latitude and Longitude.
@@ -50,7 +45,12 @@ NLDAS_DL <- function(save_dir, Site_ID, Lat, Lon, startDate, endDate){
 
 } #End DL_NLDAS function
 
+
+##############################
 # call dat for 1 site at time
+##############################
+
+## NEARSHORE ##
 NLDAS_DL(
   save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
   Site_ID = "BWL",
@@ -59,7 +59,6 @@ NLDAS_DL(
   startDate = "2020-01-01",
   endDate = "2023-11-01"
 )
-
 
 # call dat for 1 site at time
 NLDAS_DL(
@@ -71,7 +70,6 @@ NLDAS_DL(
   endDate = "2023-11-01"
 )
 
-
 NLDAS_DL(
   save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
   Site_ID = "BWNS2",
@@ -80,7 +78,6 @@ NLDAS_DL(
   startDate = "2020-01-01",
   endDate = "2023-11-01"
 )
-
 
 NLDAS_DL(
   save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
@@ -110,3 +107,55 @@ NLDAS_DL(
   startDate = "2020-01-01",
   endDate = "2023-11-01"
 )
+
+###################
+# offshore sensors 
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  Site_ID = "GB10m",
+  Lat = "39.08836",
+  Lon = "-119.9474",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  Site_ID = "GB15m", 
+  Lat = "39.088485",
+  Lon = "-119.948979",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  Site_ID = "GB20m", 
+  Lat = "39.088271",
+  Lon = "-119.950734",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  Site_ID = "BW10m", 
+  Lat = "39.10629",
+  Lon = "-120.15701",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  Site_ID = "BW20m", 
+  Lat = "39.106182", 
+  Lon = "-120.156302",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+
+# Xia, Y., et al., NCEP/EMC (2009), NLDAS Primary Forcing Data L4 Hourly 0.125 x 0.125 degree V002, Edited by David Mocko, NASA/GSFC/HSL, Greenbelt, Maryland, USA, Goddard Earth Sciences Data and Information Services Center (GES DISC), Accessed: [Data Access Date], 10.5067/6J5LHHOHZHN4

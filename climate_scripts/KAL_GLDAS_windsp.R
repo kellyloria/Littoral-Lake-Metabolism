@@ -77,3 +77,53 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
           startDate = "2021-01-01",
           endDate = "2023-11-01"
 )
+
+###############
+## OFFSHORE ##
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  Site_ID = "GB10m",
+  Lat = "39.08836",
+  Lon = "-119.9474",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  Site_ID = "GB15m", 
+  Lat = "39.088485",
+  Lon = "-119.948979",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  Site_ID = "GB20m", 
+  Lat = "39.088271",
+  Lon = "-119.950734",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  Site_ID = "BW10m", 
+  Lat = "39.10629",
+  Lon = "-120.15701",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  Site_ID = "BW20m", 
+  Lat = "39.106182", 
+  Lon = "-120.156302",
+  startDate = "2020-01-01",
+  endDate = "2023-10-01"
+)
+

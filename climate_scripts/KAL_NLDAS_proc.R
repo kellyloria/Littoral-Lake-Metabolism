@@ -129,6 +129,21 @@ plot_light
 # write.csv(x = dat2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_light/nearshore_NLDAS_light.csv", row.names = TRUE)
 
 
+
+############
+# OFF SHORE
+############
+# Call the function with your parameters
+dat1 <- NLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+                   "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_light/")
+
+dat2<- do.call(rbind, dat1)
+str(dat2)
+
+# write.csv(x = dat2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_light/offshore_NLDAS_light.csv", row.names = TRUE)
+
+
+
 #===============================================================================
 # BARO
 # GLDAS2:GLDAS_NOAH025_3H_v2.1:Psurf_f_inst
@@ -208,6 +223,7 @@ GLDAS_proc <- function(read_dir, Site_IDs, write_output = FALSE, save_dir = NULL
 # Call the function with your parameters
 gdat <- GLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro/",
                    "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_baro/")
+
 baro<- do.call(rbind, gdat)
 str(baro)
 
@@ -231,6 +247,22 @@ plot_baro <-
 plot_baro
 
 # write.csv(x = baro, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_baro/nearshore_NLDAS_baro.csv", row.names = TRUE)
+
+
+############
+# OFF SHORE
+############
+# Call the function with your parameters
+# Call the function with your parameters
+dat <- GLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/baro/",
+                   "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_baro/")
+
+dat2<- do.call(rbind, dat)
+str(dat2)
+
+# write.csv(x = dat2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_baro/offshore_NLDAS_baro.csv", row.names = TRUE)
+
+
 
 
 #===============================================================================
@@ -337,6 +369,21 @@ plot_wsp
 
 # write.csv(x = windsp, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_windsp/nearshore_NLDAS_windsp.csv", row.names = TRUE)
 
+############
+# OFF SHORE
+############
+# Call the function with your parameters
+# Call the function with your parameters
+wind <- GLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+                  "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_windsp/")
+
+wind2<- do.call(rbind, wind)
+str(wind2)
+
+# write.csv(x = wind2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_windsp/offshore_NLDAS_windsp.csv", row.names = TRUE)
+
+##############
+#### VIZ #####
 library(ggpubr)
 grid <- ggarrange(plot_light,
                            plot_baro,
