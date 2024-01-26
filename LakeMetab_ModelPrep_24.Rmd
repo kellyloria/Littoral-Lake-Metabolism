@@ -40,6 +40,16 @@ dat1 <- dat %>%
 
 ```
 
+Temporary block to subset out certain chunks
+```{r}
+dat2 <- dat1 %>%
+  filter(Site=="SSNS1" & year =="2023")
+
+range(dat2$datetime) 
+# "2023-01-01 14:00:00 PST" "2023-02-25 17:00:00 PST"
+
+```
+
 Function to get gas exchange estimates
 ```{r}
 ## Estimate gas exchange
@@ -88,7 +98,7 @@ data_K_estimate <- function(dat){
 ```
 
 ```{r}
-dat_K <- data_K_estimate(dat1)
+dat_K <- data_K_estimate(dat2)
 # quick visualization:
 ggplot(data=dat_K,aes(x=yday,y=do)) + geom_line() + facet_wrap(vars(year, Site),scales="free_x") +
   geom_point(aes(x=yday,y=z),col="blue",size=0.2)
@@ -140,7 +150,7 @@ prep_data_for_LM <- function(data){
 
 
 #****#
-
+# DO NOT RUN 
 TAKE 2 re-write for multiple site locations:
 ```{r}
 # Check column names in sonde_check
@@ -206,7 +216,7 @@ ggplot(result,aes(x=datetime,y=do)) + geom_point(size=0.2) +
 
 Function to save data:
 ```{r}
-#  write.csv(result, file = "/Users/kellyloria/Documents/LittoralMetabModeling/Sondefiles/sonde_prep_all.csv", row.names = TRUE)
+#  write.csv(result, file = "/Users/kellyloria/Documents/LittoralMetabModeling/Sondefiles/sonde_prep_SSNS1_test23.csv", row.names = TRUE)
 
 ```
 
@@ -250,16 +260,18 @@ prep_R_for_LM <- function(sonde_check, freq){
     site_data = subset(sonde_check, Site == site)
     stan_rdump(c("o2_freq", "o2_obs", "o2_eq", "light", "temp", "wspeed", "obs_per_series", "days_per_year",
                  "obs_per_day", "z", "k", "n_obs", "n_series", "n_days", "n_years"),
-               file = paste("/Users/kellyloria/Documents/LittoralMetabModeling/Sondefiles/", site, "_sonde_list.R", sep = ""))
+               file = paste("/Users/kellyloria/Documents/LittoralMetabModeling/Sondefiles/", site, "23test_sonde_list.R", sep = ""))
   }
   
 }
 
-# Example usage
-prep_R_for_LM(sonde_check = result, freq = 24)
-
 ```
 
 ```{r}
-prep_R_for_LM(sonde_check = result, freq = 24, site = "BWNS1")
+# Example usage
+prep_R_for_LM(sonde_check = result, freq = 24)
 ```
+
+
+
+

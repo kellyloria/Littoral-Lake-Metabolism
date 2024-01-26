@@ -1,5 +1,6 @@
 ##  
 
+
 # temporary path: setwd("/Users/kellyloria/Documents/LittoralMetabModeling")
 
 
@@ -65,20 +66,20 @@ plot_f1
 
 # Might still need to trim back data for odd values:
 library(plotly)
-
-# Create the plot using plot_ly
-NS_plot <- plot_ly(data = ns_DOQ_f1, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'lines',  color = ~Site) %>%
-  layout(xaxis = list(title = "Date and Time"),
-         yaxis = list(title = "DO (mgL)"))
+# 
+# # Create the plot using plot_ly
+# NS_plot <- plot_ly(data = ns_DOQ_f1, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'lines',  color = ~Site) %>%
+#   layout(xaxis = list(title = "Date and Time"),
+#          yaxis = list(title = "DO (mgL)"))
 
 # other weird outlier 
 # for just BWNS2 - battery issue: 
 filtered_data <- ns_DOQ_f1 %>%
   filter(Site != "BWNS2" & datetime < as.POSIXct("2023-05-19 22:00:00") | datetime > as.POSIXct("2023-05-20 2:00:00"))
-
-NS_plot <- plot_ly(data = filtered_data, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'lines',  color = ~Site) %>%
-  layout(xaxis = list(title = "Date and Time"),
-         yaxis = list(title = "DO (mgL)"))
+# 
+# NS_plot <- plot_ly(data = filtered_data, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'lines',  color = ~Site) %>%
+#   layout(xaxis = list(title = "Date and Time"),
+#          yaxis = list(title = "DO (mgL)"))
 
 str(filtered_data)
 # odd dip on west shore Oct 18th -24th
@@ -265,3 +266,44 @@ DOT_df3 <- DOT_df3 %>%
 summary(DOT_df3)
 
 # write.csv(DOT_df3, file = "./Step1_LakeMetab_Processed/23_NS_Inputs.csv", row.names = TRUE)
+
+# columns to save 
+# do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
+
+# create an hour objective 
+DOT_df3$hour <- lubridate::hour(DOT_df3$datetime)
+DOT_df3$yday <- lubridate::yday(DOT_df3$datetime)
+DOT_df4 <- DOT_df3%>%
+  dplyr::rename(do=do.obs, wtemp= wtr)
+
+DOT_df4$z<- c(3)
+
+names(DOT_df4)
+DOT_df5 <- DOT_df4 %>%
+  dplyr::select(Site, do, wtemp, year, yday, hour, do_eq, o2_sat, par, wspeed, z, par_int, datetime)
+
+summary(DOT_df5)
+
+## separate out downloads by site:
+createAndExportCSVs <- function(data, outputPath = "./") {
+  # Ensure the outputPath ends with a "/"
+  if (substring(outputPath, nchar(outputPath), nchar(outputPath)) != "/") {
+    outputPath <- paste0(outputPath, "/")
+  }
+  
+  # Split data based on unique "Site" values
+  siteDataList <- split(data, data$Site)
+  
+  # Create and export CSV for each site
+  for (siteName in names(siteDataList)) {
+    siteData <- siteDataList[[siteName]]
+    fileName <- paste0(outputPath, siteName, "_data.csv")
+    write.csv(siteData, file = fileName, row.names = FALSE)
+    cat("CSV exported for Site:", siteName, "- File:", fileName, "\n")
+  }
+}
+
+# Example usage:
+# Assuming your data frame is named 'yourData'
+createAndExportCSVs(DOT_df5, outputPath = "./FinalInputs/")
+

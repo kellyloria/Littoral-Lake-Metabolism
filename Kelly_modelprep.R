@@ -1,0 +1,160 @@
+## REVISION KAL
+# issue - read in 1 .csv for multiple years from 1 site at a time...
+
+#========== 
+#========== Preliminaries
+#=
+rm(list=ls())
+# load packages
+library(tidyverse)
+library(lubridate)
+library(LakeMetabolizer)
+library(rstan)
+library(patchwork)
+library(plotly)
+
+# PAUSE TO CHECK datetime str in .csv
+
+#=========================================== 
+# Get and process high frequency sensor data
+#===========================================
+lake <- "SSNS1"
+lake_id <- "SSNS1"
+max_d <-  501 
+lake.area <- 494
+out.time.period <- "60 min"
+tz <-  "US/Pacific"#"US/Central"
+
+
+sonde = list.files(paste("./FinalInputs/",sep=""), full.names = T) %>%
+  lapply(read_csv) %>%
+  bind_rows()
+if(lake == "SSNS1") sonde <- sonde %>% drop_na(datetime)
+unique(sonde$year)
+
+# temp adjust to just SSNS1
+sonde <- sonde %>% filter(Site %in% lake)
+
+# temp adjust to 1 year
+years = c(2021,2022,2023)
+
+data <- sonde %>% filter(year %in% years)
+summary(data)
+
+data <- data %>% 
+  group_by(year,yday) %>%
+  mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
+  ungroup() %>%
+  mutate(z = ifelse(z<=0.5,.5,z))%>% #can't have zero depth zmix
+  mutate(z = ifelse(z>=3,3,z)) #in littoral zone depth zmix can not be deeper than the littoral depth
+
+freq <- nrlmetab::calc.freq(data$datetime) # determine data frequency obs/day
+
+data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
+  mutate(k600 = k.vachon.base(wnd = wspeed,lake.area = lake.area)) %>% #estimate K in m/day
+  mutate(kgas = k600.2.kGAS.base(k600 = k600,temperature = wtemp,gas = "O2")) %>%  #m/d
+  mutate(k = (kgas/freq)/z) %>% #convert gas to T^-1
+  select(-kgas,-k600,-obs)
+
+if(lake == "SSNS1") { 
+  data <- data %>% 
+    mutate(k = ifelse(z<3,0,k)) #We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
+}
+
+
+ggplot(data=data,aes(x=yday,y=do)) + geom_line() + facet_wrap(vars(year),scales="free_x") +
+  geom_point(aes(x=yday,y=z),col="blue",size=0.2)
+ggplotly()
+
+#==========
+#========== Prepare for data analysis
+#==========
+
+# prepare data
+sonde_prep = data %>%
+  arrange(year, yday, hour) %>%
+  # for each year, create identifier for uninterrupted stretches of observations
+  group_by(year) %>%
+  mutate(i = ifelse(is.na(do)==T, 1, 0), 
+         j = c(1,abs(diff(i)))) %>% 
+  filter(is.na(do)==F) %>%
+  mutate(series = cumsum(j)) %>% 
+  ungroup() %>%
+  # create unique index for each series
+  # remove series with fewer than 24 observations
+  mutate(unique_series = year + series/length(unique(series))) %>%
+  group_by(unique_series) %>%
+  mutate(series_length = length(unique_series)) %>%
+  ungroup() %>%
+  # recreate series index and make unique index for days
+  # create index for observations (for joining later)
+  # replace 0 par_int with smallest non-zero value
+  mutate(unique_series = as.factor(unique_series) %>% as.numeric(),
+         unique_day = paste(year, yday) %>% as.factor() %>% as.numeric(),
+         index = 1:length(do),
+         par_int = ifelse(par_int==0,0.00001, par_int)) %>%
+  select(-i, -j) 
+
+# return missing observations for check
+sonde_check = data %>% 
+  expand(year,yday,hour) %>%
+  full_join(sonde_prep) %>%
+  arrange(year,yday)
+
+ggplot(sonde_check,aes(x=datetime,y=do)) + geom_point(size=0.2) + geom_line() + facet_wrap(vars(year),scales="free_x")
+
+# export prepared data
+if(length(years) == 1) {
+  sonde_check %>%
+    write_csv(paste("./ModelInputMeta/sonde_dat_",lake,"_",years,".csv",sep =""))
+} else {
+  sonde_check %>%
+    write_csv(paste("./sonde_dat_",lake,"_",min(years),"_",max(years),".csv",sep =""))
+}
+
+#==========
+#========== Package data 
+#==========
+
+# define variables in evnironment 
+o2_freq = freq;
+o2_obs = 1000*sonde_prep$do # convert to mg m^-3
+o2_eq = 1000*sonde_prep$do_eq # convert to mg m^-3
+light = sonde_prep$par_int
+temp = sonde_prep$wtemp
+wspeed = sonde_prep$wspeed
+# sch_conv = sonde_prep$sch_conv
+map_days = sonde_prep$unique_day
+k = sonde_prep$k
+if(length(years) == 1) {
+  days_per_year = array(c({sonde_prep %>%
+      group_by(year) %>%
+      summarize(value = length(unique(unique_day)))}$value), dim = 1) #,dim = 1
+} else {
+  days_per_year = array(c({sonde_prep %>%
+      group_by(year) %>%
+      summarize(value = length(unique(unique_day)))}$value)) #,dim = 1 
+}
+obs_per_series = c({sonde_prep %>%
+    group_by(unique_series) %>%
+    summarize(value = length(unique_series))}$value) 
+obs_per_day = c({sonde_prep %>%
+    group_by(unique_day) %>%
+    summarize(value = length(unique_day))}$value) 
+z = sonde_prep$z
+n_obs = length(o2_obs)
+n_series = length(obs_per_series) 
+n_days = sum(days_per_year)
+n_years = length(days_per_year)
+
+# export as .R
+if(length(years)>1) {
+  stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
+               "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
+             file=paste("./ModelInputs/",lake,"_",min(years),"_",max(years),"_sonde_list.R",sep=""))
+} else {
+  stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
+               "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
+             file=paste("./ModelInputs/",lake,"_",years,"_sonde_list.R",sep=""))
+}
+
