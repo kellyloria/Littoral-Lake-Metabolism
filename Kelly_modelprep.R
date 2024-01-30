@@ -13,30 +13,41 @@ library(rstan)
 library(patchwork)
 library(plotly)
 
+
 # PAUSE TO CHECK datetime str in .csv
+getwd()
 
 #=========================================== 
 # Get and process high frequency sensor data
 #===========================================
-lake <- "SSNS1"
-lake_id <- "SSNS1"
+lake <- "GBNS2"
+lake_id <- "GBNS2"
 max_d <-  501 
 lake.area <- 494
 out.time.period <- "60 min"
 tz <-  "US/Pacific"#"US/Central"
 
 
+#"R:\Users\kloria\Documents\LittoralMetabModeling\FinalInputs\GBNS2_data.csv"
+
 sonde = list.files(paste("./FinalInputs/",sep=""), full.names = T) %>%
   lapply(read_csv) %>%
   bind_rows()
-if(lake == "SSNS1") sonde <- sonde %>% drop_na(datetime)
+if(lake == "GBNS2") sonde <- sonde %>% drop_na(datetime)
 unique(sonde$year)
 
-# temp adjust to just SSNS1
+# ## Alt read in
+# sonde<- read.csv("./FinalInputs/GBNS2_data.csv") %>%
+#   bind_rows()
+# if(lake == "GBNS2") sonde <- sonde %>% drop_na(datetime)
+# unique(sonde$year)
+
+
+# temp adjust to just GBNS2
 sonde <- sonde %>% filter(Site %in% lake)
 
 # temp adjust to 1 year
-years = c(2021,2022,2023)
+years = c(2020, 2021,2022,2023)
 
 data <- sonde %>% filter(year %in% years)
 summary(data)
@@ -48,7 +59,7 @@ data <- data %>%
   mutate(z = ifelse(z<=0.5,.5,z))%>% #can't have zero depth zmix
   mutate(z = ifelse(z>=3,3,z)) #in littoral zone depth zmix can not be deeper than the littoral depth
 
-freq <- nrlmetab::calc.freq(data$datetime) # determine data frequency obs/day
+freq <- calc.freq(data$datetime) # determine data frequency obs/day
 
 data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
   mutate(k600 = k.vachon.base(wnd = wspeed,lake.area = lake.area)) %>% #estimate K in m/day
@@ -56,7 +67,7 @@ data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
   mutate(k = (kgas/freq)/z) %>% #convert gas to T^-1
   select(-kgas,-k600,-obs)
 
-if(lake == "SSNS1") { 
+if(lake == lake) { 
   data <- data %>% 
     mutate(k = ifelse(z<3,0,k)) #We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
 }
@@ -109,7 +120,7 @@ if(length(years) == 1) {
     write_csv(paste("./ModelInputMeta/sonde_dat_",lake,"_",years,".csv",sep =""))
 } else {
   sonde_check %>%
-    write_csv(paste("./sonde_dat_",lake,"_",min(years),"_",max(years),".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/sonde_dat_",lake,"_",min(years),"_",max(years),".csv",sep =""))
 }
 
 #==========

@@ -1,5 +1,7 @@
 rm(list=ls())
 # temporary path: setwd("/Users/kellyloria/Documents/LittoralMetabModeling")
+# PC: setwd("R:/Users/kloria/Documents/LittoralMetabModeling")
+getwd()
 
 
 # load packages
@@ -11,11 +13,10 @@ library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
 
-memory.limit(size = 50000)
 
-lake <- "SSNS1" #c("sparkling","trout")
+lake <- "GBNS2" #c("sparkling","trout")
 
-year <- c(2022,2023)
+year <- c(2020,2021, 2022,2023)
 # stan settings
 options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
@@ -27,20 +28,21 @@ data <- read_rdump(paste("./ModelInputs/",lake,"_",min(year),"_",max(year),"_son
 mean(data$temp)
 
 # set reference temperature
-data$temp_ref <- 5.5
+data$temp_ref <- c(mean(data$temp))
 
 model <- "o2_model_inhibition.stan" #Steele 2 param inhibition
 model_path <- paste0("./Littoral-Lake-Metabolism/stan/",model)
 
 chains <- 6
-iter <-300 
-warmup <- 100
-adapt_delta <- 0.80
-max_treedepth <- 10
+iter <-3000 
+warmup <- 1500
+adapt_delta <- 0.85
+max_treedepth <- 15
 thin <- 1
 data$sig_b0 <- 0.01 #pmax smoothing parameter
 data$sig_r <- 0.01  #respiration smoothing parameter
 data$sig_i0 <- 0.2  #light saturation smoothing parameter
+
 
 sm <- stan_model(file = model_path)
 stanfit <- sampling(sm, data = data, chains = chains, cores = chains, iter = iter, warmup = min(iter*0.5,warmup),
@@ -76,7 +78,11 @@ fit_clean <- fit_summary %>%
 
 # data 
 # CHECK THIS FILE NAME 
-sonde_data <- read_csv(paste("./ModelInputMeta/","sonde_prep",lake,"_",min(year),"_",max(year),"_sonde_list.csv",sep=""))
+
+#"R:\Users\kloria\Documents\LittoralMetabModeling\ModelInputMeta\sonde_prep_SSNS1_2023.csv"
+sonde_data <- read_csv(paste("./ModelInputMeta/","sonde_dat_",lake,"_",min(year),"_",max(year),".csv",sep=""))
+
+# "R:\Users\kloria\Documents\LittoralMetabModeling\ModelInputMeta\sonde_dat_BWNS1_2021_2023.csv"
 
 out <- fit_clean %>%
   filter(name %in% c("GPP","ER","NEP")) %>%
@@ -87,6 +93,7 @@ out <- fit_clean %>%
          lower = ifelse(name=="ER",-lower,lower),
          upper = ifelse(name=="ER",-upper,upper),
          name = factor(name, levels=c("GPP","NEP","ER")))
+
 out2 <- fit_clean %>%
   filter(name %in% c("GPP_m2","ER_m2","NEP_m2"))%>%
   rename(unique_day = day) %>% 
@@ -107,16 +114,6 @@ out3 <- rbind(out,out2)
 write_csv(out3, paste0(output_path,"/",lake,"_","_daily_full.csv"))
 write_csv(fit_clean, paste0(output_path,"/",lake,"_","_summary_clean.csv"))
 
-if(lake=="sparkling") c14 <- read_tsv("data/sp_daily14c_prod.txt") %>% 
-  mutate(year = year(date),yday=yday(date)) %>% filter(type=="m3")
-if(lake =="trout") c14 <- read_tsv("data/tr_daily14c_Prod.txt") %>% 
-  mutate(year = year(date),yday=yday(date)) %>% filter(type=="m3") %>% 
-  filter(yday(date)>=152)
-if(lake=="castle") c14 <- read_csv("data/ca_daily14c_prod.csv") %>% 
-  mutate(Date = mdy(Date)) %>% 
-  mutate(yday=yday(Date),year=year(Date)) %>% 
-  rename(p80 = mgc_l_d) %>% 
-  mutate(p80 = p80*1000)
 
 
 #plot primary parameters
@@ -131,14 +128,14 @@ p1 <- fit_clean %>%
   theme_bw() +
   labs(y="Mean Estimated Value",color="year",x="Day of Year")
 p1
-ggsave(plot = p1,filename = paste("D:/IADO/UNR/NoahPPR/modelAlder3M/graphics/castle_2015_2019.png",sep=""),width=11,height=8.5,dpi=300)
+# ggsave(plot = p1,filename = paste("D:/IADO/UNR/NoahPPR/modelAlder3M/graphics/castle_2015_2019.png",sep=""),width=11,height=8.5,dpi=300)
 
 #plot time series of estimates
 p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
   geom_hline(yintercept = 0, size = 0.3, color = "gray50")+
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = name),
               linetype = 0, alpha = 0.2)+
-  geom_line()+
+  geom_line()+ geom_point()+
   #geom_point(data = out %>% left_join(c14),aes(x=yday,y=(p80/12.011),color="C14")) +
   scale_color_manual(values = c("green","black","dodgerblue","firebrick")) +
   scale_fill_manual(values = c("dodgerblue","firebrick","black")) +
@@ -147,4 +144,6 @@ p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
   facet_wrap(vars(year))
 p2
 
-ggsave(plot = p2,filename = paste("D:/IADO/UNR/NoahPPR/modelAlder3M/graphics/castle_2015_2019_metabolism.png",sep=""),width=11,height=8.5,dpi=300)
+figure_path <- paste0("./Figures/")
+
+ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab.jpeg"),width=18,height=4,dpi=300)
