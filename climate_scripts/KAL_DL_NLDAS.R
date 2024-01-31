@@ -157,5 +157,48 @@ NLDAS_DL(
   endDate = "2023-10-01"
 )
 
+###########
+## streams
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  Site_ID = "BWL", # 39.1075414	-120.1646811
+  Lat = "39.1075414", 
+  Lon = "-120.1646811",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
+
+
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  Site_ID = "BWU", # 39.10533	-120.19551
+  Lat = "39.10533", 
+  Lon = "-120.19551",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
+
+
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  Site_ID = "GBU", # 39.086755	-119.9316616
+  Lat = "39.086755", 
+  Lon = "-119.9316616",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
+
+
+NLDAS_DL(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  Site_ID = "GBL", # 39.0880435	-119.9389446
+  Lat = "39.0880435", 
+  Lon = "-119.9389446",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
 
 # Xia, Y., et al., NCEP/EMC (2009), NLDAS Primary Forcing Data L4 Hourly 0.125 x 0.125 degree V002, Edited by David Mocko, NASA/GSFC/HSL, Greenbelt, Maryland, USA, Goddard Earth Sciences Data and Information Services Center (GES DISC), Accessed: [Data Access Date], 10.5067/6J5LHHOHZHN4

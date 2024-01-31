@@ -131,3 +131,49 @@ DL_GLDAS(
   startDate = "2020-01-01",
   endDate = "2023-10-01"
 )
+
+
+###
+
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  Site_ID = "BWL", # 39.1075414	-120.1646811
+  Lat = "39.1075414", 
+  Lon = "-120.1646811",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
+
+
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  Site_ID = "BWU", # 39.10533	-120.19551
+  Lat = "39.10533", 
+  Lon = "-120.19551",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
+
+
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  Site_ID = "GBU", # 39.086755	-119.9316616
+  Lat = "39.086755", 
+  Lon = "-119.9316616",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
+
+
+DL_GLDAS(
+  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  Site_ID = "GBL", # 39.0880435	-119.9389446
+  Lat = "39.0880435", 
+  Lon = "-119.9389446",
+  startDate = "2020-01-01",
+  endDate = "2024-01-01"
+)
+

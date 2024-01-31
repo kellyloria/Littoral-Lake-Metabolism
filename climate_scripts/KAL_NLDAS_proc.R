@@ -97,6 +97,8 @@ NLDAS_proc <- function(read_dir, Site_IDs, write_output = FALSE, save_dir = NULL
 }
 
 # Call the function with your parameters
+
+
 dat1 <- NLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/NLDAS_light/",
                    "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_light/")
 
@@ -142,6 +144,15 @@ str(dat2)
 
 # write.csv(x = dat2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_light/offshore_NLDAS_light.csv", row.names = TRUE)
 
+###########
+# stream 
+###########
+dat1 <- NLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+                   "~/Documents/LittoralMetabModeling/RawData/stream/")
+
+dat2<- do.call(rbind, dat1)
+str(dat2)
+# write.csv(x = dat2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/stream_NLDAS_light.csv", row.names = TRUE)
 
 
 #===============================================================================
@@ -253,7 +264,6 @@ plot_baro
 # OFF SHORE
 ############
 # Call the function with your parameters
-# Call the function with your parameters
 dat <- GLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/baro/",
                    "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_baro/")
 
@@ -262,6 +272,18 @@ str(dat2)
 
 # write.csv(x = dat2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/processed_baro/offshore_NLDAS_baro.csv", row.names = TRUE)
 
+
+############
+# stream
+############
+# Call the function with your parameters
+dat <- GLDAS_proc("~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+                  "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/")
+
+dat2<- do.call(rbind, dat)
+str(dat2)
+
+# write.csv(x = dat2, file = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/stream_NLDAS_baro.csv", row.names = TRUE)
 
 
 
