@@ -1,8 +1,26 @@
+#' Estimate littoral metabolism
+#' 
+#' @description stan model o2_model_inhibition.stan
+#' @param lake in file name of .cvs of "\LittoralMetabModeling\FinalInputs\"
+#' 
+#' @return Returns .r file for running metabolism model 
+#' @export 
+#' 
+
+##==============================================================================
+## script modified from https://github.com/nrlottig/nrlmetab
+## additional details https://github.com/GLEON/LakeMetabolizer/tree/main
+## Created  01/31/2024 by KAL
+## * NEED to fix issue with only 1 years worth of dat *
+#===============================================================================
+
+
 rm(list=ls())
-# temporary path: setwd("/Users/kellyloria/Documents/LittoralMetabModeling")
-# PC: setwd("R:/Users/kloria/Documents/LittoralMetabModeling")
 getwd()
 
+## KAL's temporary path reminders: 
+## setwd("/Users/kellyloria/Documents/LittoralMetabModeling")
+## PC: setwd("R:/Users/kloria/Documents/LittoralMetabModeling")
 
 # load packages
 library(tidyverse)
@@ -12,27 +30,24 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
+lake <- "SSNS1" # check to site
+year <- c(2021,2022,2023)
 
-
-lake <- "BWNS3" #c("sparkling","trout")
-
-year <- c(2020,2021, 2022,2023)
 # stan settings
 options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
+
 # read data
 data <- read_rdump(paste("./ModelInputs/",lake,"_",min(year),"_",max(year),"_sonde_list.R",sep=""))
-
-  # read_rdump(paste("/ModelInputs/",lake,"_",min(year),"_",max(year),"_sonde_list.R",sep=""))
-
-mean(data$temp)
 
 # set reference temperature
 data$temp_ref <- c(mean(data$temp))
 
+# call the stan based model
 model <- "o2_model_inhibition.stan" #Steele 2 param inhibition
 model_path <- paste0("./Littoral-Lake-Metabolism/stan/",model)
 
+# set sampler dependencies 
 chains <- 6
 iter <-1000 
 warmup <-500
@@ -44,23 +59,33 @@ data$sig_r <- 0.01  #respiration smoothing parameter
 data$sig_i0 <- 0.2  #light saturation smoothing parameter
 
 
+##==================================
+## Compile and run the model
+##==================================
 sm <- stan_model(file = model_path)
 stanfit <- sampling(sm, data = data, chains = chains, cores = chains, iter = iter, warmup = min(iter*0.5,warmup),
                 control = list(adapt_delta = adapt_delta, max_treedepth = max_treedepth), 
                 seed=194838,thin = thin,save_warmup=FALSE)
 
 
+##==================================
+## Assess model fit
+##==================================
+
 fit_summary <- summary(stanfit, probs=c(0.025,0.5,0.975))$summary %>% 
   {as_tibble(.) %>%
       mutate(var = rownames(summary(stanfit)$summary))}
 
-
+# specific summaries
 check_n_eff(stanfit)
 check_rhat(stanfit)
 check_div(stanfit)
 check_treedepth(stanfit,max_treedepth)
 check_energy(stanfit)
 
+##==================================
+## Export model fit
+##==================================
 # export path
 output_path <- paste0("./ModelOutput/")
 # save model full output
@@ -76,13 +101,13 @@ fit_clean <- fit_summary %>%
   select(name, index, day, middle,lower,upper)
 
 
-# data 
-# CHECK THIS FILE NAME 
+##==================================
+## Rejoin output with meta dat
+##==================================
+# * CHECK THIS FILE NAME 
 
-#"R:\Users\kloria\Documents\LittoralMetabModeling\ModelInputMeta\sonde_prep_SSNS1_2023.csv"
 sonde_data <- read_csv(paste("./ModelInputMeta/","sonde_dat_",lake,"_",min(year),"_",max(year),".csv",sep=""))
 
-# "R:\Users\kloria\Documents\LittoralMetabModeling\ModelInputMeta\sonde_dat_BWNS1_2021_2023.csv"
 
 out <- fit_clean %>%
   filter(name %in% c("GPP","ER","NEP")) %>%
@@ -106,16 +131,17 @@ out2 <- fit_clean %>%
 
 out3 <- rbind(out,out2)
 
-#==========
-#==========  Export
-#==========
+##==================================
+## Export model results
+##==================================
 
-# export
 write_csv(out3, paste0(output_path,"/",lake,"_","_daily_full.csv"))
 write_csv(fit_clean, paste0(output_path,"/",lake,"_","_summary_clean.csv"))
 
 
-
+##==================================
+## Plot model results
+##==================================
 #plot primary parameters
 p1 <- fit_clean %>%  
   filter(name=="b0" | name == "r" | name == "i0" ) %>% 
@@ -146,4 +172,4 @@ p2
 
 figure_path <- paste0("./Figures/")
 
-ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab.jpeg"),width=18,height=4,dpi=300)
+# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab.jpeg"),width=18,height=4,dpi=300)

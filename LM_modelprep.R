@@ -1,66 +1,77 @@
-## REVISION KAL
-# issue - read in 1 .csv for multiple years from 1 site at a time...
+#' Preps data for littoral metabolism using stan 
+#' @description preps data using functions from LakeMetabolizer().See k.vachon.base() and k600.2.kGAS.base
+#' @param lake_id in file name of .cvs of "\LittoralMetabModeling\FinalInputs\"
+#' @param lake same as lake_id for now
+#' @param max_d max lake depth in m
+#' @param lake.area max lake area in m^2
+#' @param out.time.period minutes 
+#' @param tz here  "US/Pacific"
+#'
+#'
+#' @return Returns .r file for running metabolism model 
+#' @export 
 
-#========== 
-#========== Preliminaries
-#=
+##==============================================================================
+## script modified from https://github.com/nrlottig/nrlmetab
+## additional details https://github.com/GLEON/LakeMetabolizer/tree/main
+## Created  01/31/2024 by KAL
+#===============================================================================
 rm(list=ls())
-# load packages
+getwd()
+
+## KAL's temporary path reminders: 
+## setwd("/Users/kellyloria/Documents/LittoralMetabModeling")
+## PC: setwd("R:/Users/kloria/Documents/LittoralMetabModeling")
+
+
+## load packages
 library(tidyverse)
 library(lubridate)
 library(LakeMetabolizer)
 library(rstan)
 library(patchwork)
 library(plotly)
+source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 
+## Prepping 1 site at a time for added caution
 
-# PAUSE TO CHECK datetime str in .csv
-getwd()
-
-#=========================================== 
-# Get and process high frequency sensor data
-#===========================================
-lake <- "BWNS3"
-lake_id <- "BWNS3"
+##==================================
+## Get and process clean data
+##==================================
+lake <- "SSNS1"
+lake_id <- "SSNS1"
 max_d <-  501 
-lake.area <- 494
+lake.area <- 496200000
 out.time.period <- "60 min"
-tz <-  "US/Pacific"#"US/Central"
+tz <-  "US/Pacific"
 
-
-#"R:\Users\kloria\Documents\LittoralMetabModeling\FinalInputs\BWNS3_data.csv"
-
+# read in clean data:
 sonde = list.files(paste("./FinalInputs/",sep=""), full.names = T) %>%
   lapply(read_csv) %>%
   bind_rows()
-if(lake == "BWNS3") sonde <- sonde %>% drop_na(datetime)
+if(lake == "lake_id") sonde <- sonde %>% drop_na(datetime)
 unique(sonde$year)
 
-# ## Alt read in
-# sonde<- read.csv("./FinalInputs/BWNS3_data.csv") %>%
-#   bind_rows()
-# if(lake == "BWNS3") sonde <- sonde %>% drop_na(datetime)
-# unique(sonde$year)
-
-
-# temp adjust to just BWNS3
+# Adjust to just site 
 sonde <- sonde %>% filter(Site %in% lake)
 
-# temp adjust to 1 year
-years = c(2020, 2021,2022,2023)
-
+# Adjust data frame to relevant years
+years = c(2021,2022,2023)
 data <- sonde %>% filter(year %in% years)
 summary(data)
 
+# set conditions for mixing depth "z"
 data <- data %>% 
   group_by(year,yday) %>%
   mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
   ungroup() %>%
-  mutate(z = ifelse(z<=0.5,.5,z))%>% #can't have zero depth zmix
-  mutate(z = ifelse(z>=3,3,z)) #in littoral zone depth zmix can not be deeper than the littoral depth
+  mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
+  mutate(z = ifelse(z>=3,3,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
 
-freq <- calc.freq(data$datetime) # determine data frequency obs/day
+# determine data frequency obs/day
+freq <- calc.freq(data$datetime) # needs to be 24
 
+# use lake metabolizer fxn to calculate gas exchange:
 data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
   mutate(k600 = k.vachon.base(wnd = wspeed,lake.area = lake.area)) %>% #estimate K in m/day
   mutate(kgas = k600.2.kGAS.base(k600 = k600,temperature = wtemp,gas = "O2")) %>%  #m/d
@@ -69,17 +80,18 @@ data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
 
 if(lake == lake) { 
   data <- data %>% 
-    mutate(k = ifelse(z<3,0,k)) #We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
+    mutate(k = ifelse(z<3,0,k)) #Note from Lotting--We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
 }
 
-
+# quick plot to check: 
 ggplot(data=data,aes(x=yday,y=do)) + geom_line() + facet_wrap(vars(year),scales="free_x") +
   geom_point(aes(x=yday,y=z),col="blue",size=0.2)
 ggplotly()
 
-#==========
-#========== Prepare for data analysis
-#==========
+
+##==================================
+## Prepare for data analysis
+##==================================
 
 # prepare data
 sonde_prep = data %>%
@@ -123,11 +135,13 @@ if(length(years) == 1) {
     write_csv(paste("./ModelInputMeta/sonde_dat_",lake,"_",min(years),"_",max(years),".csv",sep =""))
 }
 
-#==========
-#========== Package data 
-#==========
 
-# define variables in evnironment 
+##==================================
+## Package data for modeling
+##==================================
+
+
+# define variables in environment 
 o2_freq = freq;
 o2_obs = 1000*sonde_prep$do # convert to mg m^-3
 o2_eq = 1000*sonde_prep$do_eq # convert to mg m^-3

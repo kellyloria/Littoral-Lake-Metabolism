@@ -1,8 +1,20 @@
-##  
+#' Aggregates and cleans miniDOT data for eventual littoral metabolism modeling 
+#' @description brings in climate data from NLDAS, light data from sensors and attenuation data from TERC
+#'
+#' @return Returns .csvs named by site for calculating metab fxns in "LM_modelprep" 
+#' @export 
 
+##===============================================================================
+## Created  01/31/2024 by KAL
+## look to https://github.com/nrlottig/nrlmetab for help with metab fxns
+#===============================================================================
 
-# temporary path: setwd("/Users/kellyloria/Documents/LittoralMetabModeling")
+## KAL's temporary path reminders: 
+## setwd("/Users/kellyloria/Documents/LittoralMetabModeling")
+## PC: setwd("R:/Users/kloria/Documents/LittoralMetabModeling")
 
+# install.packages("remotes")
+# remotes::install_github("nrlottig/nrlmetab")
 
 lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
          "tidyverse","data.table","xts","dygraphs",
@@ -11,12 +23,9 @@ lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
 source("./Littoral-Lake-Metabolism/saved_fxns/LM.o2.at.sat.R")
 source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
 
-# read in data:
-# Flag 1 - "YES" indicates day of deployment or removal
-# Flag 2 - "YES" indicates poor miniDOT instrument function
-# Flag 3 - "YES" indicates poor miniwiper instrument function
-# Flag 4 - "YES" indicates suspected biofouling due to any of the above, photos, or general DO trends
-
+##==========================
+## Read in DO data
+#===========================
 ns_DO <- readRDS("/Users/kellyloria/Documents/LittoralMetabModeling/RawData/NS_miniDOT/flagged_all_100423.rds")
 str(ns_DO)
 ns_DO <- ns_DO %>% 
@@ -38,6 +47,11 @@ ns_DOQ <- ns_DO%>%
 unique(ns_DOQ$Site)
 
 # Look at flags:
+# Flag 1 - "YES" indicates day of deployment or removal
+# Flag 2 - "YES" indicates poor miniDOT instrument function
+# Flag 3 - "YES" indicates poor miniwiper instrument function
+# Flag 4 - "YES" indicates suspected biofouling due to any of the above, photos, or general DO trends
+
 plot <-
   ggplot(ns_DOQ, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
   geom_point(alpha=0.1) + geom_line(alpha=0.25)+
@@ -65,6 +79,7 @@ plot_f1 <-
 plot_f1
 
 # Might still need to trim back data for odd values:
+# zoom in plotly
 library(plotly)
 # 
 # # Create the plot using plot_ly
@@ -84,50 +99,47 @@ filtered_data <- ns_DOQ_f1 %>%
 str(filtered_data)
 # odd dip on west shore Oct 18th -24th
 
-##################################
-# 2. merge in weather station data:
-baro_dat <- read.csv("/Users/kellyloria/Documents/LittoralMetabModeling/RawData/NLDAS/processed_baro/nearshore_NLDAS_baro.csv")
+##==========================
+## Read in climate data
+#===========================
+baro_dat <- read.csv("./RawData/NLDAS/processed_baro/nearshore_NLDAS_baro.csv")
 
 baro_datQ <- baro_dat %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) %>%
   with_tz(tz = "America/Los_Angeles") %>%
   select(site, datetime, baro_Pa)
 
-  
-light_dat <- read.csv("/Users/kellyloria/Documents/LittoralMetabModeling/RawData/NLDAS/processed_light/nearshore_NLDAS_light.csv")
+light_dat <- read.csv("./RawData/NLDAS/processed_light/nearshore_NLDAS_light.csv")
 light_datQ <- light_dat %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) %>%
   with_tz(tz = "America/Los_Angeles") %>%
   dplyr::select(site, datetime, light)
 
-wind_dat <- read.csv("/Users/kellyloria/Documents/LittoralMetabModeling/RawData/NLDAS/processed_windsp/nearshore_NLDAS_windsp.csv")
+wind_dat <- read.csv("./RawData/NLDAS/processed_windsp/nearshore_NLDAS_windsp.csv")
 
 wind_datQ <- wind_dat %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) %>%
   with_tz(tz = "America/Los_Angeles") %>%
   dplyr::select(site, datetime, windsp_ms)
 
+##====
+## Merge climate datasets and change some grouping variables 
 ## final data selection: ##
 clim_dat <- light_datQ %>%
   left_join(wind_datQ, by = c("datetime", "site")) %>%
   left_join(baro_datQ, by = c("datetime", "site")) %>%
   filter(datetime > as.POSIXct("2021-01-01 00:00:00"))  %>%
-  mutate(shore = case_when(
-    site == "BWNS2" ~ "BW",
+  mutate(shore = case_when( # create broad variable to lineup climate and DO dat
+    site == "BWNS2" ~ "BW", # dat is ~4km resolution so called it from NLDAS based on center miniDOT in each array
     site == "SHNS2" ~ "SH",
     site == "SSNS2" ~ "SS",
     site == "GBNS2" ~ "GB",
     TRUE ~ as.character(site)))
 
-clim_datF <- clim_dat %>%
-  fill(light, .direction = "down")%>%
-  fill(windsp_ms,.direction = "down")%>%
-  fill(baro_Pa,.direction = "down")%>% 
-  mutate(baro= (baro_Pa*0.01)) # %>% dplyr::ungroup()
 
-
-
-  
+##===============================
+## Merge DO and in climate data
+#================================
 # Left join climate to NS data:
 filtered_dat <- filtered_data %>%
   dplyr::select(site,Site,datetime_rounded, datetime, Temperature_deg_C, 
@@ -136,8 +148,12 @@ filtered_dat <- filtered_data %>%
 NS_dat <- filtered_dat %>%
   left_join(clim_datF, by = c("datetime_rounded"="datetime" , "site"="shore")) 
 
-
-# infill some climate NAs
+##=====
+## Temporary infill of climate data to allow for more accurate DO aggregation 
+## DO obs are 15 
+## light is 1 hr
+## baro and windsp are every 3 hr 
+## gas exchange calcs are at based on hr values 
 NS_datF <- NS_dat %>%
   #dplyr::group_by(site)%>%
   fill(light, .direction = "down")%>%
@@ -147,9 +163,9 @@ NS_datF <- NS_dat %>%
 
 summary(NS_datF)
 
-##########################
-# 3. NS shore functions
-###########################
+##===============================
+## NS shore functions
+#================================
 # a. check oxygen saturation calculation
 ## take the mean each hour for the cleaned miniDOT data & calc o2_sat
 DOT_df <- NS_datF %>%
@@ -166,9 +182,10 @@ DOT_df <- NS_datF %>%
     mutate(o2_sat=do.obs/do_eq) %>%
     mutate(wspeed = wind.scale.base(windsp, wnd.z = 10)) # height of anemometer (Units: meters)/ here NLDAS range coverage
   
-##################
-# 4. Light fxns #
-#################
+##==============================================
+## Attenuation estimations (and extrapolations)
+#===============================================
+## * still kinda a mess *
 
 extcoef <- read.csv("./AggRawData/TERC_2021_Kd_coeffs.csv", header=T) 
 ## modify kd dataframe
@@ -195,23 +212,24 @@ extcoef23$datetime <- extcoef23$datetime %m+% years(2)
 
 extcoef<- rbind(extcoef, extcoef22, extcoef23)
 extcoef$year <- lubridate::year(extcoef$datetime)
-
-# 
-kd_O <- read.csv("./AggRawData/Climate/PAR_FA10B7CAD952_W_Kdest.csv")
-kd_O<- na.omit(kd_O)
-
-kd_O1 <- kd_O %>%
-  mutate(datetime = as.POSIXct((datetime), format ="%Y-%m-%d %H:%M:%S")) 
-kd_O1$hour <- lubridate::hour(kd_O1$datetime)
-kd_O1$yday <- lubridate::yday(kd_O1$datetime)
-kd_O1$year <- lubridate::year(kd_O1$datetime)
-
-kd_O2 <- kd_O1 %>% 
-  subset(hour>11 & hour<15) %>%
-  group_by(datetime = floor_date(datetime, "day"), yday, year) %>%
-  dplyr::summarise(PAR_Kd = mean(Kd2, na.rm = T))
-
 extcoef$yday <- lubridate::yday(extcoef$datetime)
+
+
+####
+## Read in PAR data from 10m buoy
+kd_O <- read.csv("./AggRawData/Climate/PAR_FA10B7CAD952_W_Kdest.csv") %>%
+  na.omit() %>%
+  mutate(
+    datetime = as.POSIXct(datetime, format ="%Y-%m-%d %H:%M:%S"),
+    hour = hour(datetime),
+    yday = yday(datetime),
+    year = year(datetime)
+  ) %>%
+  filter(hour > 11 & hour < 15) %>%
+  group_by(datetime = floor_date(datetime, "day"), yday, year) %>%
+  summarise(PAR_Kd = mean(Kd2, na.rm = TRUE))
+
+####
 
 kd_O3<- rbind(kd_O2, extcoef)
 
@@ -239,8 +257,10 @@ Kd_int <- Kd_intQ %>%
 plot(Kd_int$PAR_Kd)
 sapply(Kd_int, class)
 
+##==============================================
+## Merge par data with DO data.
+#===============================================
 
-# Merge par data with DO data.
 ### Apply these Kd values to all time series
 # 
 DOT_df$yday <- lubridate::yday(DOT_df$datetime)
@@ -262,14 +282,8 @@ DOT_df3 <- DOT_df2 %>%
 DOT_df3 <- DOT_df3 %>%
   mutate(par_int = (par - par*exp(-PAR_Kd*3))/(PAR_Kd*3)) # multipler = "(extcoef*3)" should be depth of water column (3m in this case)
 
-#check
-summary(DOT_df3)
-
-# write.csv(DOT_df3, file = "./Step1_LakeMetab_Processed/23_NS_Inputs.csv", row.names = TRUE)
-
-# columns to save 
-# do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
-
+## columns to save 
+## do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
 # create an hour objective 
 DOT_df3$hour <- lubridate::hour(DOT_df3$datetime)
 DOT_df3$yday <- lubridate::yday(DOT_df3$datetime)
@@ -284,8 +298,13 @@ DOT_df5 <- DOT_df4 %>%
 
 summary(DOT_df5)
 
+##===============================
+## Export and save data:
+#================================
+
+
 ## separate out downloads by site:
-createAndExportCSVs <- function(data, outputPath = "./") {
+Export_csvs <- function(data, outputPath = "./") {
   # Ensure the outputPath ends with a "/"
   if (substring(outputPath, nchar(outputPath), nchar(outputPath)) != "/") {
     outputPath <- paste0(outputPath, "/")
@@ -303,7 +322,7 @@ createAndExportCSVs <- function(data, outputPath = "./") {
   }
 }
 
-# Example usage:
-# Assuming your data frame is named 'yourData'
-createAndExportCSVs(DOT_df5, outputPath = "./FinalInputs/")
+
+# save
+# Export_csvs(DOT_df5, outputPath = "./FinalInputs/")
 
