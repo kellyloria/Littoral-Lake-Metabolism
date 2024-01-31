@@ -14,7 +14,7 @@ source("./Littoral-Lake-Metabolism/stan_utility.R")
 
 
 
-lake <- "GBNS2" #c("sparkling","trout")
+lake <- "BWNS3" #c("sparkling","trout")
 
 year <- c(2020,2021, 2022,2023)
 # stan settings
@@ -34,8 +34,8 @@ model <- "o2_model_inhibition.stan" #Steele 2 param inhibition
 model_path <- paste0("./Littoral-Lake-Metabolism/stan/",model)
 
 chains <- 6
-iter <-3000 
-warmup <- 1500
+iter <-1000 
+warmup <-500
 adapt_delta <- 0.85
 max_treedepth <- 15
 thin <- 1

@@ -20,30 +20,30 @@ getwd()
 #=========================================== 
 # Get and process high frequency sensor data
 #===========================================
-lake <- "GBNS2"
-lake_id <- "GBNS2"
+lake <- "BWNS3"
+lake_id <- "BWNS3"
 max_d <-  501 
 lake.area <- 494
 out.time.period <- "60 min"
 tz <-  "US/Pacific"#"US/Central"
 
 
-#"R:\Users\kloria\Documents\LittoralMetabModeling\FinalInputs\GBNS2_data.csv"
+#"R:\Users\kloria\Documents\LittoralMetabModeling\FinalInputs\BWNS3_data.csv"
 
 sonde = list.files(paste("./FinalInputs/",sep=""), full.names = T) %>%
   lapply(read_csv) %>%
   bind_rows()
-if(lake == "GBNS2") sonde <- sonde %>% drop_na(datetime)
+if(lake == "BWNS3") sonde <- sonde %>% drop_na(datetime)
 unique(sonde$year)
 
 # ## Alt read in
-# sonde<- read.csv("./FinalInputs/GBNS2_data.csv") %>%
+# sonde<- read.csv("./FinalInputs/BWNS3_data.csv") %>%
 #   bind_rows()
-# if(lake == "GBNS2") sonde <- sonde %>% drop_na(datetime)
+# if(lake == "BWNS3") sonde <- sonde %>% drop_na(datetime)
 # unique(sonde$year)
 
 
-# temp adjust to just GBNS2
+# temp adjust to just BWNS3
 sonde <- sonde %>% filter(Site %in% lake)
 
 # temp adjust to 1 year
