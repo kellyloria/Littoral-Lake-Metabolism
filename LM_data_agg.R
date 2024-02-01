@@ -102,22 +102,17 @@ str(filtered_data)
 ##==========================
 ## Read in climate data
 #===========================
-baro_dat <- read.csv("./RawData/NLDAS/processed_baro/nearshore_NLDAS_baro.csv")
-
-baro_datQ <- baro_dat %>%
+baro_dat <- read.csv("./RawData/NLDAS/processed_baro/nearshore_NLDAS_baro.csv") %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) %>%
   with_tz(tz = "America/Los_Angeles") %>%
   select(site, datetime, baro_Pa)
 
-light_dat <- read.csv("./RawData/NLDAS/processed_light/nearshore_NLDAS_light.csv")
-light_datQ <- light_dat %>%
+light_dat <- read.csv("./RawData/NLDAS/processed_light/nearshore_NLDAS_light.csv") %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) %>%
   with_tz(tz = "America/Los_Angeles") %>%
   dplyr::select(site, datetime, light)
 
-wind_dat <- read.csv("./RawData/NLDAS/processed_windsp/nearshore_NLDAS_windsp.csv")
-
-wind_datQ <- wind_dat %>%
+wind_dat <- read.csv("./RawData/NLDAS/processed_windsp/nearshore_NLDAS_windsp.csv") %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) %>%
   with_tz(tz = "America/Los_Angeles") %>%
   dplyr::select(site, datetime, windsp_ms)
@@ -125,9 +120,9 @@ wind_datQ <- wind_dat %>%
 ##====
 ## Merge climate datasets and change some grouping variables 
 ## final data selection: ##
-clim_dat <- light_datQ %>%
-  left_join(wind_datQ, by = c("datetime", "site")) %>%
-  left_join(baro_datQ, by = c("datetime", "site")) %>%
+clim_dat <- light_dat %>%
+  left_join(wind_dat, by = c("datetime", "site")) %>%
+  left_join(baro_dat, by = c("datetime", "site")) %>%
   filter(datetime > as.POSIXct("2021-01-01 00:00:00"))  %>%
   mutate(shore = case_when( # create broad variable to lineup climate and DO dat
     site == "BWNS2" ~ "BW", # dat is ~4km resolution so called it from NLDAS based on center miniDOT in each array
