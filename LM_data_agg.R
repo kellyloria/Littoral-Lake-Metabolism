@@ -26,7 +26,7 @@ source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
 ##==========================
 ## Read in DO data
 #===========================
-ns_DO <- readRDS("/Users/kellyloria/Documents/LittoralMetabModeling/RawData/NS_miniDOT/flagged_all_100423.rds")
+ns_DO <- readRDS("./LittoralMetabModeling/RawData/NS_miniDOT/flagged_all_100423.rds")
 str(ns_DO)
 ns_DO <- ns_DO %>% 
   mutate(datetime = as.POSIXct(Pacific_Standard_Time, format ="%Y-%m-%d %H:%M:%S")) %>%
@@ -182,7 +182,7 @@ DOT_df <- NS_datF %>%
 #===============================================
 ## * still kinda a mess *
 
-extcoef <- read.csv("./AggRawData/TERC_2021_Kd_coeffs.csv", header=T) 
+extcoef <- read.csv("./RawData/benthic_light/TERC_2021_Kd_coeffs.csv", header=T) 
 ## modify kd dataframe
 head(extcoef)
 
@@ -211,8 +211,9 @@ extcoef$yday <- lubridate::yday(extcoef$datetime)
 
 
 ####
-## Read in PAR data from 10m buoy
-kd_O <- read.csv("./AggRawData/Climate/PAR_FA10B7CAD952_W_Kdest.csv") %>%
+## Read in PAR data from 10m buoy 
+## NEED TO UPDATE ##
+kd_O <- read.csv("./RawData/benthic_light/PAR_FA10B7CAD952_W_clean.csv") %>%
   na.omit() %>%
   mutate(
     datetime = as.POSIXct(datetime, format ="%Y-%m-%d %H:%M:%S"),
@@ -222,7 +223,7 @@ kd_O <- read.csv("./AggRawData/Climate/PAR_FA10B7CAD952_W_Kdest.csv") %>%
   ) %>%
   filter(hour > 11 & hour < 15) %>%
   group_by(datetime = floor_date(datetime, "day"), yday, year) %>%
-  summarise(PAR_Kd = mean(Kd2, na.rm = TRUE))
+  summarise(PAR_Kd = mean(PAR, na.rm = TRUE))
 
 ####
 
