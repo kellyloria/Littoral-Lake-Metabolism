@@ -4,9 +4,9 @@ Modeling ecosystem energetics in the littoral or near shore of Lake Tahoe.
 ## R script names
 - "NS" referes to a cinder block sensor deployment in either position 1, 2, or 3 at either Blackwood "BW" or Glenbrook "GB"
 
-  - "LM_data_agg" step 1: cleans and aggregates the miniDOT DO data, validation data for PAR extinction, local weather, and could eventually include lake profiles for water temperature and DO from either a handheld YSI pro plus or an RBR multi probe sensor.
+  - "LM_data_agg" step 1: cleans and aggregates the miniDOT DO data, validation data for PAR extinction, local weather, and could eventually include lake profiles for water temperature and DO from either a handheld YSI pro plus or an RBR multi probe sensor. This file may be the most unique to my workflow. It also is where we bring in betnhic ligh and attenuation estimates. 
   - "LM_modelprep" step 2: formats the data into the stan model list and calculates some of the model paramters
-  - "LM_model" step 3 or model: deploys the lake analyzer model in stan.  
+  - "LM_model" step 3 or model: deploys the lake analyzer model in stan.
 
 ## Refs
 - Lotting et al. 2021: Light transformations and mixing dynamic https://aslopubs.onlinelibrary.wiley.com/doi/epdf/10.1002/lom3.10471
