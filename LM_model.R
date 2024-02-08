@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "SSNS1" # check to site
+lake <- "BWNS3" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -48,8 +48,8 @@ model <- "o2_model_inhibition.stan" #Steele 2 param inhibition
 model_path <- paste0("./Littoral-Lake-Metabolism/stan/",model)
 
 # set sampler dependencies 
-chains <- 6
-iter <-1000 
+chains <- 3 # was 6
+iter <-1000  # small test run 
 warmup <-500
 adapt_delta <- 0.85
 max_treedepth <- 15

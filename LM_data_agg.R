@@ -26,7 +26,7 @@ source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
 ##==========================
 ## Read in DO data
 #===========================
-ns_DO <- readRDS("./LittoralMetabModeling/RawData/NS_miniDOT/flagged_all_100423.rds")
+ns_DO <- readRDS("./RawData/NS_miniDOT/flagged_all_100423.rds")
 str(ns_DO)
 ns_DO <- ns_DO %>% 
   mutate(datetime = as.POSIXct(Pacific_Standard_Time, format ="%Y-%m-%d %H:%M:%S")) %>%
@@ -141,7 +141,7 @@ filtered_dat <- filtered_data %>%
                 Dissolved_O_mg_L, Dissolved_O_Saturation_perc)
 
 NS_dat <- filtered_dat %>%
-  left_join(clim_datF, by = c("datetime_rounded"="datetime" , "site"="shore")) 
+  left_join(clim_dat, by = c("datetime_rounded"="datetime" , "site"="shore")) 
 
 ##=====
 ## Temporary infill of climate data to allow for more accurate DO aggregation 
@@ -176,117 +176,68 @@ DOT_df <- NS_datF %>%
     mutate(do_eq=o2.at.sat.base(temp = wtr, baro=baro, altitude = 1897)) %>%  # Tahoe altitude in m  = 1897 
     mutate(o2_sat=do.obs/do_eq) %>%
     mutate(wspeed = wind.scale.base(windsp, wnd.z = 10)) # height of anemometer (Units: meters)/ here NLDAS range coverage
-  
+
 ##==============================================
 ## Attenuation estimations (and extrapolations)
 #===============================================
-## * still kinda a mess *
+# read in light dat:
+PAR_dat <- read.csv("./RawData/benthic_light/PAR_calc_dat.csv") %>%
+  mutate(date = as.Date(date)) %>%
+  dplyr::select(shore, date, Kd_fill, PAR_ave1, depth_cor, par_int_3m)
 
-extcoef <- read.csv("./RawData/benthic_light/TERC_2021_Kd_coeffs.csv", header=T) 
-## modify kd dataframe
-head(extcoef)
-
-# No time obs so dummy data set:
-extcoef$datetime <- as.POSIXct(c(
-  "2021-07-01 12:00:00",
-  "2021-08-20 12:00:00",
-  "2021-08-23 12:00:00",
-  "2021-08-25 12:00:00",
-  "2021-08-27 12:00:00",
-  "2021-09-02 12:00:00",
-  "2021-09-21 12:00:00",
-  "2021-09-30 12:00:00"), 
-  tz="America/Los_Angeles",
-  format = c("%Y-%m-%d %H:%M:%OS"))
-
-# separate by year 
-extcoef22<-extcoef
-extcoef22$datetime <- extcoef22$datetime %m+% years(1)
-extcoef23<-extcoef
-extcoef23$datetime <- extcoef23$datetime %m+% years(2)
-
-extcoef<- rbind(extcoef, extcoef22, extcoef23)
-extcoef$year <- lubridate::year(extcoef$datetime)
-extcoef$yday <- lubridate::yday(extcoef$datetime)
-
-
-####
-## Read in PAR data from 10m buoy 
-## NEED TO UPDATE ##
-kd_O <- read.csv("./RawData/benthic_light/PAR_FA10B7CAD952_W_clean.csv") %>%
-  na.omit() %>%
-  mutate(
-    datetime = as.POSIXct(datetime, format ="%Y-%m-%d %H:%M:%S"),
-    hour = hour(datetime),
-    yday = yday(datetime),
-    year = year(datetime)
-  ) %>%
-  filter(hour > 11 & hour < 15) %>%
-  group_by(datetime = floor_date(datetime, "day"), yday, year) %>%
-  summarise(PAR_Kd = mean(PAR, na.rm = TRUE))
-
-####
-
-kd_O3<- rbind(kd_O2, extcoef)
-
-
-## create data frame for interpolation
-Kd_int21 <- as.data.frame(cbind("year" = rep(2021,length(seq(from = extcoef$yday[1], to = 365))), ## you added the :2022
-                                "yday" = seq(from = extcoef$yday[1], to = 365)))
-
-Kd_int22 <- as.data.frame(cbind("year" = rep(2022,length(seq(1:365))), ## you added the :2022
-                                "yday" = seq(1:365)))
-
-Kd_int23 <- as.data.frame(cbind("year" = rep(2023,length(seq(1:365))), ## you added the :2022
-                                "yday" = seq(1:365)))
-
-##
-Kd_int <-rbind(Kd_int21, Kd_int22, Kd_int23)
-
-Kd_intQ <- left_join(Kd_int, kd_O3[,c("year", "yday","PAR_Kd")], by=c("year", "yday"))
-
-
-## interpolate between Kd values to create a daily time series
-Kd_int <- Kd_intQ %>%
-  mutate(PAR_Kd = na.approx(PAR_Kd, maxgap = Inf, na.rm=F))
-#check
-plot(Kd_int$PAR_Kd)
-sapply(Kd_int, class)
-
-##==============================================
-## Merge par data with DO data.
-#===============================================
-
-### Apply these Kd values to all time series
-# 
-DOT_df$yday <- lubridate::yday(DOT_df$datetime)
 DOT_df$year <- lubridate::year(DOT_df$datetime)
-summary(DOT_df)
+DOT_df$yday <- lubridate::yday(DOT_df$datetime)
+DOT_df$hour <- lubridate::hour(DOT_df$datetime)
+DOT_df$date <- as.Date(DOT_df$datetime)
 
-DOT_df1 <- left_join(DOT_df, Kd_int[,c("year", "yday","PAR_Kd")], by=c("year", "yday"))
+DOT_df <- DOT_df%>%
+  mutate(shore = case_when(
+    Site == "BWNS2" ~ "BW", 
+    Site == "BWNS1" ~ "BW", 
+    Site == "BWNS3" ~ "BW", 
+    Site == "SHNS2" ~ "SH",
+    Site == "SHNS1" ~ "SH",
+    Site == "SHNS3" ~ "SH",
+    Site == "SSNS1" ~ "SS",
+    Site == "SSNS3" ~ "SS",
+    Site == "SSNS2" ~ "SS",
+    Site == "GBNS1" ~ "GB",
+    Site == "GBNS1" ~ "GB",
+    Site == "GBNS2" ~ "GB",
+  TRUE ~ as.character(Site)))
+  
+DOT_df1 <- left_join(DOT_df, PAR_dat, by=c("date", "shore"))
+
+summary(DOT_df1)
 
 DOT_df2 <- DOT_df1 %>%
-  dplyr::group_by(yday)%>%
-  fill(PAR_Kd, .direction = "down")%>%
+  dplyr::group_by(date)%>%
+  fill(Kd_fill, .direction = "down")%>%
+  fill(par_int_3m, .direction = "down")%>%
+  fill(depth_cor, .direction = "down")%>%
   dplyr::ungroup()
 
 DOT_df3 <- DOT_df2 %>%
   dplyr::group_by(yday)%>%
-  fill(PAR_Kd, .direction = "up")%>%
+  fill(Kd_fill, .direction = "up")%>%
+  fill(baro, .direction = "up")%>%
+  fill(wspeed, .direction = "up")%>%
+  fill(do_eq, .direction = "up")%>%
+  fill(o2_sat, .direction = "up")%>%
   dplyr::ungroup()
-
-DOT_df3 <- DOT_df3 %>%
-  mutate(par_int = (par - par*exp(-PAR_Kd*3))/(PAR_Kd*3)) # multipler = "(extcoef*3)" should be depth of water column (3m in this case)
 
 ## columns to save 
 ## do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
 # create an hour objective 
-DOT_df3$hour <- lubridate::hour(DOT_df3$datetime)
-DOT_df3$yday <- lubridate::yday(DOT_df3$datetime)
-DOT_df4 <- DOT_df3%>%
-  dplyr::rename(do=do.obs, wtemp= wtr)
 
-DOT_df4$z<- c(3)
+DOT_df4 <- DOT_df3%>%
+  dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int_3m)
+
+
+# add in accurate depth changes based on 3m initial placement:
+DOT_df4$z<- c(3+DOT_df4$depth_cor)
+
+summary(DOT_df4)
 
 names(DOT_df4)
 DOT_df5 <- DOT_df4 %>%

@@ -38,8 +38,8 @@ source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "SSNS1"
-lake_id <- "SSNS1"
+lake <- "BWNS3"
+lake_id <- "BWNS3"
 max_d <-  501 
 lake.area <- 496200000
 out.time.period <- "60 min"
@@ -66,7 +66,7 @@ data <- data %>%
   mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
   ungroup() %>%
   mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
-  mutate(z = ifelse(z>=3,3,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
+  mutate(z = ifelse(z>=4,4,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
 
 # determine data frequency obs/day
 freq <- calc.freq(data$datetime) # needs to be 24
@@ -80,7 +80,7 @@ data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
 
 if(lake == lake) { 
   data <- data %>% 
-    mutate(k = ifelse(z<3,0,k)) #Note from Lotting--We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
+    mutate(k = ifelse(z<4,0,k)) #Note from Lotting--We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
 }
 
 # quick plot to check: 
