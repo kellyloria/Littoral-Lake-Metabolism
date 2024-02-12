@@ -62,11 +62,16 @@ plot <-
         plot.subtitle = element_text(size = 12)) #+ theme(legend.position = "none") + facet_grid(Name~.)
 plot
 
-# Filter non-flagged data
-ns_DOQ_f4 <- ns_DOQ %>% filter(Flag4=="NO")
-ns_DOQ_f3 <- ns_DOQ_f4 %>% filter(Flag3=="NO")
-ns_DOQ_f2 <- ns_DOQ_f3 %>% filter(Flag2=="NO")
-ns_DOQ_f1 <- ns_DOQ_f2 %>% filter(Flag1=="NO")
+# # Filter non-flagged data
+# ns_DOQ_f4 <- ns_DOQ %>% filter(Flag4=="NO")
+# ns_DOQ_f3 <- ns_DOQ_f4 %>% filter(Flag3=="NO")
+# ns_DOQ_f2 <- ns_DOQ_f3 %>% filter(Flag2=="NO")
+# ns_DOQ_f1 <- ns_DOQ_f2 %>% filter(Flag1=="NO")
+
+# For "NF" data:
+ns_DOQ_f1 <- ns_DOQ %>% filter(Flag1=="NO")
+
+
 
 plot_f1 <-
   ggplot(ns_DOQ_f1, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
@@ -271,5 +276,5 @@ Export_csvs <- function(data, outputPath = "./") {
 
 
 # save
-# Export_csvs(DOT_df5, outputPath = "./FinalInputs/")
+# Export_csvs(DOT_df5, outputPath = "./FinalInputs/NonFiltered/")
 

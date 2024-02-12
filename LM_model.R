@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "BWNS3" # check to site
+lake <- "GBNS2" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -38,7 +38,7 @@ options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
 
 # read data
-data <- read_rdump(paste("./ModelInputs/",lake,"_",min(year),"_",max(year),"_sonde_list.R",sep=""))
+data <- read_rdump(paste("./ModelInputs/NF/",lake,"_",min(year),"_",max(year),"_sonde_list.R",sep=""))
 
 # set reference temperature
 data$temp_ref <- c(mean(data$temp))
@@ -48,9 +48,9 @@ model <- "o2_model_inhibition.stan" #Steele 2 param inhibition
 model_path <- paste0("./Littoral-Lake-Metabolism/stan/",model)
 
 # set sampler dependencies 
-chains <- 3 # was 6
-iter <-1000  # small test run 
-warmup <-500
+chains <- 6 # was 6
+iter <-5000  #  test run 
+warmup <-2500
 adapt_delta <- 0.85
 max_treedepth <- 15
 thin <- 1
@@ -87,7 +87,7 @@ check_energy(stanfit)
 ## Export model fit
 ##==================================
 # export path
-output_path <- paste0("./ModelOutput/")
+output_path <- paste0("./ModelOutput/NF/")
 # save model full output
 saveRDS(stanfit, paste0(output_path,"/",lake,"_fit.rds"))
 
@@ -106,7 +106,7 @@ fit_clean <- fit_summary %>%
 ##==================================
 # * CHECK THIS FILE NAME 
 
-sonde_data <- read_csv(paste("./ModelInputMeta/","sonde_dat_",lake,"_",min(year),"_",max(year),".csv",sep=""))
+sonde_data <- read_csv(paste("./ModelInputMeta/NF/","sonde_dat_",lake,"_",min(year),"_",max(year),".csv",sep=""))
 
 
 out <- fit_clean %>%
@@ -170,6 +170,6 @@ p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
   facet_wrap(vars(year))
 p2
 
-figure_path <- paste0("./Figures/")
+figure_path <- paste0("./Figures/NF/")
 
-# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab.jpeg"),width=18,height=4,dpi=300)
+# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab_v2.jpeg"),width=18,height=4,dpi=300)
