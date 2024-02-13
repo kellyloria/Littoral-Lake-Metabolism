@@ -31,7 +31,7 @@ str(ns_DO)
 ns_DO <- ns_DO %>% 
   mutate(datetime = as.POSIXct(Pacific_Standard_Time, format ="%Y-%m-%d %H:%M:%S")) %>%
   with_tz(tz = "America/Los_Angeles") %>%
-  mutate(datetime_rounded = round_date(datetime, "5 mins"))
+  mutate(datetime = round_date(datetime, "5 mins"))
 
 # create matching column to line up data by site:
 ns_DO$Site <- paste(ns_DO$site, ns_DO$location, ns_DO$replicate, sep = "_")
@@ -52,16 +52,6 @@ unique(ns_DOQ$Site)
 # Flag 3 - "YES" indicates poor miniwiper instrument function
 # Flag 4 - "YES" indicates suspected biofouling due to any of the above, photos, or general DO trends
 
-plot <-
-  ggplot(ns_DOQ, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) #+ theme(legend.position = "none") + facet_grid(Name~.)
-plot
-
 # # Filter non-flagged data
 # ns_DOQ_f4 <- ns_DOQ %>% filter(Flag4=="NO")
 # ns_DOQ_f3 <- ns_DOQ_f4 %>% filter(Flag3=="NO")
@@ -70,40 +60,127 @@ plot
 
 # For "NF" data:
 ns_DOQ_f1 <- ns_DOQ %>% filter(Flag1=="NO")
+ns_DOQ_f2 <- ns_DOQ_f1 %>% filter(Flag2=="NO")
 
 
-
-plot_f1 <-
-  ggplot(ns_DOQ_f1, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
+plot_f2 <-
+  ggplot(ns_DOQ_f2, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
   geom_point(alpha=0.1) + geom_line(alpha=0.25)+
   #labs(y = 'light dat', x=NULL) +
   theme_bw() +
   theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
         axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
         plot.subtitle = element_text(size = 12)) #+ theme(legend.position = "none") + facet_grid(Name~.)
-plot_f1
+plot_f2
 
 # Might still need to trim back data for odd values:
 # zoom in plotly
 library(plotly)
+
+# select just the NS sites:
+ns_DOQ<- as.data.frame(ns_DOQ_f2)
+str(ns_DOQ)
+summary(ns_DOQ)
+range(ns_DOQ$datetime)
+
 # 
-# # Create the plot using plot_ly
-# NS_plot <- plot_ly(data = ns_DOQ_f1, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'lines',  color = ~Site) %>%
-#   layout(xaxis = list(title = "Date and Time"),
-#          yaxis = list(title = "DO (mgL)"))
+# Create the plot using plot_ly
+NS_plot <- plot_ly(data = ns_DOQ, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'markers',  color = ~Site) %>%
+  layout(xaxis = list(title = "Date and Time"),
+         yaxis = list(title = "DO (mgL)"))
 
 # other weird outlier 
 # for just BWNS2 - battery issue: 
-filtered_data <- ns_DOQ_f1 %>%
-  filter(Site != "BWNS2" & datetime < as.POSIXct("2023-05-19 22:00:00") | datetime > as.POSIXct("2023-05-20 2:00:00"))
-# 
-# NS_plot <- plot_ly(data = filtered_data, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'lines',  color = ~Site) %>%
-#   layout(xaxis = list(title = "Date and Time"),
-#          yaxis = list(title = "DO (mgL)"))
+## BWNS1:
+filtered_bwns1 <- ns_DOQ %>%
+  filter(Site == "BWNS1")  %>%
+  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00"))%>%
+  filter(datetime < as.POSIXct("2022-11-01 00:00:00") | datetime > as.POSIXct("2022-11-10 00:00:00"))%>%
+  filter(datetime < as.POSIXct("2023-05-26 00:00:00") | datetime > as.POSIXct("2023-06-02 00:00:00"))
+  
 
-str(filtered_data)
-# odd dip on west shore Oct 18th -24th
+## BWNS2:
+filtered_bwns2 <- ns_DOQ %>%
+  filter(Site == "BWNS2")  %>%
+  filter(datetime < as.POSIXct("2022-05-24 02:00:00") | datetime > as.POSIXct("2022-09-07 12:00:00")) %>%
+  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00")) %>%
+  filter(datetime < as.POSIXct("2023-05-19 22:00:00") | datetime > as.POSIXct("2023-05-20 04:00:00"))
 
+## BWNS3
+filtered_bwns3 <- ns_DOQ %>%
+  filter(Site == "BWNS3")  %>%
+  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00")) %>%
+  filter(datetime < as.POSIXct("2023-03-15 10:00:00") | datetime > as.POSIXct("2023-05-25 02:00:00"))
+
+# GBNS1
+filtered_gbns1 <- ns_DOQ %>%
+  filter(Site == "GBNS1")  %>%
+  filter(datetime < as.POSIXct("2022-03-11 20:00:00") | datetime > as.POSIXct("2022-05-24 02:00:00")) %>%
+  filter(datetime < as.POSIXct("2022-12-08 20:00:00") | datetime > as.POSIXct("2023-02-05 02:00:00")) %>%
+  filter(datetime < as.POSIXct("2023-07-19 20:00:00") | datetime > as.POSIXct("2023-07-20 23:00:00"))
+
+##GBNS2
+filtered_gbns2 <- ns_DOQ %>%
+  filter(Site == "GBNS2")  %>%
+  filter(datetime < as.POSIXct("2022-04-18 20:00:00") | datetime > as.POSIXct("2022-05-06 00:00:00")) %>%
+  filter(datetime < as.POSIXct("2022-04-18 20:00:00") | datetime > as.POSIXct("2022-05-06 00:00:00")) %>%
+  filter(datetime < as.POSIXct("2023-04-02 20:00:00") | datetime > as.POSIXct("2023-05-26 00:00:00"))
+
+## GBNS3
+filtered_gbns3 <- ns_DOQ %>%
+  filter(Site == "GBNS3")  %>%
+  filter(datetime < as.POSIXct("2023-03-10 20:00:00") | datetime > as.POSIXct("2023-05-26 00:00:00"))
+
+## SHNS1
+filtered_shns1 <- ns_DOQ %>%
+  filter(Site == "SHNS1")  %>%
+  filter(datetime < as.POSIXct("2023-02-21 20:00:00") | datetime > as.POSIXct("2023-05-26 00:00:00"))
+
+## SHNS2
+filtered_shns2 <- ns_DOQ %>%
+  filter(Site == "SHNS2")  %>%
+  filter(datetime < as.POSIXct("2023-05-02 20:00:00") | datetime > as.POSIXct("2023-05-04 20:00:00"))
+
+## SHNS3
+filtered_shns3 <- ns_DOQ %>%
+  filter(Site == "SHNS3")  %>%
+  filter(datetime < as.POSIXct("2023-07-25 00:00:00") | datetime > as.POSIXct("2023-07-27 00:00:00")) 
+
+## SSNS1
+filtered_SSNS1 <- ns_DOQ %>%
+  filter(Site == "SSNS1")  %>%
+  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00"))
+
+filtered_SSNS2 <- ns_DOQ %>%
+  filter(Site == "SSNS2")  
+
+
+Filterdat <- rbind(filtered_bwns1, filtered_bwns2, filtered_bwns3, 
+                   filtered_gbns1, filtered_gbns2, filtered_gbns3,
+                   filtered_shns1, filtered_shns2, filtered_shns3,
+                   filtered_SSNS1, filtered_SSNS2)
+
+
+NS_plot <- plot_ly(data = Filterdat, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'markers',  color = ~Site) %>%
+  layout(xaxis = list(title = "Date and Time"),
+         yaxis = list(title = "DO (mgL)"))
+
+str(Filterdat)
+Filterdat <- Filterdat%>%
+  mutate(shore = case_when( # create broad variable to lineup climate and DO dat
+    site == "BWNS2" ~ "BW", 
+    site == "BWNS1" ~ "BW", 
+    site == "BWNS3" ~ "BW", 
+    site == "SHNS2" ~ "SH",
+    site == "SHNS1" ~ "SH",
+    site == "SHNS3" ~ "SH",
+    site == "SSNS2" ~ "SS",
+    site == "SSNS1" ~ "SS",
+    site == "GBNS2" ~ "GB",
+    site == "GBNS1" ~ "GB",
+    site == "GBNS3" ~ "GB",
+    TRUE ~ as.character(site)))
+  
 ##==========================
 ## Read in climate data
 #===========================
@@ -128,7 +205,7 @@ wind_dat <- read.csv("./RawData/NLDAS/processed_windsp/nearshore_NLDAS_windsp.cs
 clim_dat <- light_dat %>%
   left_join(wind_dat, by = c("datetime", "site")) %>%
   left_join(baro_dat, by = c("datetime", "site")) %>%
-  filter(datetime > as.POSIXct("2021-01-01 00:00:00"))  %>%
+  filter(datetime > as.POSIXct("2021-06-01 00:00:00"))  %>%
   mutate(shore = case_when( # create broad variable to lineup climate and DO dat
     site == "BWNS2" ~ "BW", # dat is ~4km resolution so called it from NLDAS based on center miniDOT in each array
     site == "SHNS2" ~ "SH",
@@ -136,17 +213,40 @@ clim_dat <- light_dat %>%
     site == "GBNS2" ~ "GB",
     TRUE ~ as.character(site)))
 
+unique(clim_dat$shore)
+
+clim_dat<- clim_dat %>%
+  dplyr::group_by(shore)%>%
+  fill(windsp_ms,.direction = "down")%>%
+  fill(baro_Pa,.direction = "down")%>% 
+  mutate(baro= (baro_Pa*0.01),
+         par= (light* 2.114)) %>% dplyr::ungroup()
+
+summary(clim_dat)
+str(clim_dat)
+
+####
+## STOP MAKE SURE DATA IS MERGING AND INFILLING
+## BW looks better nor but we maybe just make sure 
+##
+
 
 ##===============================
 ## Merge DO and in climate data
 #================================
 # Left join climate to NS data:
-filtered_dat <- filtered_data %>%
-  dplyr::select(site,Site,datetime_rounded, datetime, Temperature_deg_C, 
+filtered_dat <- Filterdat %>%
+  dplyr::select(shore,site,Site, datetime, Temperature_deg_C, 
                 Dissolved_O_mg_L, Dissolved_O_Saturation_perc)
+str(filtered_dat)
 
-NS_dat <- filtered_dat %>%
-  left_join(clim_dat, by = c("datetime_rounded"="datetime" , "site"="shore")) 
+filtered_datH <- filtered_dat %>%
+  dplyr::group_by(Site, shore, datetime = floor_date(datetime, "hour")) %>%
+  dplyr::summarise(do.obs = mean(Dissolved_O_mg_L, na.rm = TRUE),
+                   wtr = mean(Temperature_deg_C, na.rm = TRUE)) 
+
+NS_dat <- filtered_datH %>%
+  left_join(clim_dat, by = c("shore", "datetime"))
 
 ##=====
 ## Temporary infill of climate data to allow for more accurate DO aggregation 
@@ -154,33 +254,18 @@ NS_dat <- filtered_dat %>%
 ## light is 1 hr
 ## baro and windsp are every 3 hr 
 ## gas exchange calcs are at based on hr values 
-NS_datF <- NS_dat %>%
-  #dplyr::group_by(site)%>%
-  fill(light, .direction = "down")%>%
-  fill(windsp_ms,.direction = "down")%>%
-  fill(baro_Pa,.direction = "down")%>% 
-  mutate(baro= (baro_Pa*0.01)) # %>% dplyr::ungroup()
 
-summary(NS_datF)
+summary(NS_dat)
 
 ##===============================
 ## NS shore functions
 #================================
 # a. check oxygen saturation calculation
 ## take the mean each hour for the cleaned miniDOT data & calc o2_sat
-DOT_df <- NS_datF %>%
-    dplyr::group_by(Site, datetime = floor_date(datetime_rounded, "hour")) %>%
-    dplyr::summarise(
-      do.obs = mean(Dissolved_O_mg_L, na.rm = TRUE), 
-      Lohman_sat = mean(Dissolved_O_Saturation_perc, na.rm = TRUE),
-      wtr = mean(Temperature_deg_C, na.rm = TRUE),
-      baro = mean(baro, na.rm = TRUE),
-      windsp = mean(windsp_ms, na.rm = TRUE),
-      par = mean(light, na.rm = TRUE)
-                     ) %>%
+DOT_df <- NS_dat %>%
     mutate(do_eq=o2.at.sat.base(temp = wtr, baro=baro, altitude = 1897)) %>%  # Tahoe altitude in m  = 1897 
     mutate(o2_sat=do.obs/do_eq) %>%
-    mutate(wspeed = wind.scale.base(windsp, wnd.z = 10)) # height of anemometer (Units: meters)/ here NLDAS range coverage
+    mutate(wspeed = wind.scale.base(windsp_ms, wnd.z = 10)) # height of anemometer (Units: meters)/ here NLDAS range coverage
 
 ##==============================================
 ## Attenuation estimations (and extrapolations)
@@ -194,48 +279,14 @@ DOT_df$year <- lubridate::year(DOT_df$datetime)
 DOT_df$yday <- lubridate::yday(DOT_df$datetime)
 DOT_df$hour <- lubridate::hour(DOT_df$datetime)
 DOT_df$date <- as.Date(DOT_df$datetime)
-
-DOT_df <- DOT_df%>%
-  mutate(shore = case_when(
-    Site == "BWNS2" ~ "BW", 
-    Site == "BWNS1" ~ "BW", 
-    Site == "BWNS3" ~ "BW", 
-    Site == "SHNS2" ~ "SH",
-    Site == "SHNS1" ~ "SH",
-    Site == "SHNS3" ~ "SH",
-    Site == "SSNS1" ~ "SS",
-    Site == "SSNS3" ~ "SS",
-    Site == "SSNS2" ~ "SS",
-    Site == "GBNS1" ~ "GB",
-    Site == "GBNS1" ~ "GB",
-    Site == "GBNS2" ~ "GB",
-  TRUE ~ as.character(Site)))
   
 DOT_df1 <- left_join(DOT_df, PAR_dat, by=c("date", "shore"))
 
 summary(DOT_df1)
-
-DOT_df2 <- DOT_df1 %>%
-  dplyr::group_by(date)%>%
-  fill(Kd_fill, .direction = "down")%>%
-  fill(par_int_3m, .direction = "down")%>%
-  fill(depth_cor, .direction = "down")%>%
-  dplyr::ungroup()
-
-DOT_df3 <- DOT_df2 %>%
-  dplyr::group_by(yday)%>%
-  fill(Kd_fill, .direction = "up")%>%
-  fill(baro, .direction = "up")%>%
-  fill(wspeed, .direction = "up")%>%
-  fill(do_eq, .direction = "up")%>%
-  fill(o2_sat, .direction = "up")%>%
-  dplyr::ungroup()
-
 ## columns to save 
 ## do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
-# create an hour objective 
 
-DOT_df4 <- DOT_df3%>%
+DOT_df4 <- DOT_df1%>%
   dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int_3m)
 
 
