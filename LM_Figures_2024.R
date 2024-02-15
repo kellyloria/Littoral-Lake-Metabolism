@@ -86,7 +86,7 @@ p2 <- ggplot(data = LM_data %>% drop_na(year),aes(date, middle, color = name))+
         legend.direction = "horizontal") +
   facet_grid((site~.))
 p2
-# ggsave(plot = p2, filename = paste("./24_LM_figures/24_all_NF.png",sep=""),width=10.5,height=12,dpi=300)
+# ggsave(plot = p2, filename = paste("./24_LM_figures/24_all_NF.png",sep=""),width=9,height=11,dpi=300)
 
 
 ## Subset for expected values |35|
@@ -111,7 +111,7 @@ p3 <- ggplot(data = LM_data1 %>% drop_na(year),aes(date, middle, color = name))+
         legend.direction = "horizontal") +
   facet_grid((site~.))
 p3
-# ggsave(plot = p3, filename = paste("./24_LM_figures/24_all_NF_subset.png",sep=""),width=10.5,height=12,dpi=300)
+# ggsave(plot = p3, filename = paste("./24_LM_figures/24_all_NF_subset.png",sep=""),width=9,height=9,dpi=300)
 
 
 ##============================================
@@ -129,7 +129,7 @@ LM_dataF <- do.call(rbind, processed_data_list)
 ## subset data:
 LM_dataF <-LM_dataF %>% 
   subset(name=="ER" | name=="GPP"|name=="NEP") %>%
-  filter(site=="BWNS3"| site=="GBNS2"| site=="GBNS3"| site=="SSNS1")
+  filter(site=="BWNS3"| site=="GBNS3" | site=="SSNS1")
 
 # add in column for date:
 LM_dataF$origin <- as.Date(paste0(LM_dataF$year, "-01-01"),) 
@@ -155,7 +155,7 @@ p4 <- ggplot(data = LM_dataF %>% drop_na(year),aes(date, middle, color = name))+
         legend.direction = "horizontal") +
   facet_grid((site~.))
 p4
-# ggsave(plot = p4, filename = paste("./24_LM_figures/24_all_F.png",sep=""),width=10.5,height=12,dpi=300)
+# ggsave(plot = p4, filename = paste("./24_LM_figures/24_all_F.png",sep=""),width=9,height=10,dpi=300)
 
 
 ## Subset for expected values |35|
@@ -180,148 +180,239 @@ p5 <- ggplot(data = LM_dataF1 %>% drop_na(year),aes(date, middle, color = name))
         legend.direction = "horizontal") +
   facet_grid((site~.))
 p5
-# ggsave(plot = p5, filename = paste("./24_LM_figures/24_all_F_subset2.png",sep=""),width=10.5,height=12,dpi=300)
+# ggsave(plot = p5, filename = paste("./24_LM_figures/24_all_F_subset2.png",sep=""),width=9,height=9,dpi=300)
 
 ### KEY model inputs:
 # BWNS3, GBNS2, GBNS3, SSNS1
 
-### RAW do:
-ns_DO <- readRDS("./RawData/NS_miniDOT/flagged_all_100423.rds")
-str(ns_DO)
-ns_DO <- ns_DO %>% 
-  mutate(datetime = as.POSIXct(Pacific_Standard_Time, format ="%Y-%m-%d %H:%M:%S")) %>%
-  with_tz(tz = "America/Los_Angeles") %>%
-  mutate(datetime_rounded = round_date(datetime, "5 mins"))
+# ### RAW do:
+# ns_DO <- readRDS("./RawData/NS_miniDOT/flagged_all_100423.rds")
+# str(ns_DO)
+# ns_DO <- ns_DO %>% 
+#   mutate(datetime = as.POSIXct(Pacific_Standard_Time, format ="%Y-%m-%d %H:%M:%S")) %>%
+#   with_tz(tz = "America/Los_Angeles") %>%
+#   mutate(datetime_rounded = round_date(datetime, "5 mins"))
+# 
+# # create matching column to line up data by site:
+# ns_DO$Site <- paste(ns_DO$site, ns_DO$location, ns_DO$replicate, sep = "_")
+# unique(ns_DO$Site)
+# ns_DO$Site <- gsub("_3m_", "", ns_DO$Site)
 
-# create matching column to line up data by site:
-ns_DO$Site <- paste(ns_DO$site, ns_DO$location, ns_DO$replicate, sep = "_")
-unique(ns_DO$Site)
-ns_DO$Site <- gsub("_3m_", "", ns_DO$Site)
+## Read in final input / cleaned DO:
+DO_dat = list.files(paste("./FinalInputs/NonFiltered/",sep=""), full.names = T) %>%
+  lapply(read_csv) %>%
+  bind_rows() %>%
+  mutate(datetime = as.POSIXct((datetime), format ="%d-%m-%Y %H:%M:%S"))
+str(DO_dat)
+
 
 # select just the NS sites:
-ns_DOW <- ns_DO%>%
+ns_DOW <- DO_dat%>%
   filter(Site=="BWNS1" | Site=="BWNS2" |Site=="BWNS3"|
            Site=="SSNS1" |Site=="SSNS2" | Site=="SSNS3") 
            
-ns_DOE <- ns_DO%>%
+ns_DOE <- DO_dat%>%
   filter(Site=="SHNS1" | Site=="SHNS2" | Site=="SHNS3" |
            Site=="GBNS1" |Site=="GBNS2" |Site=="GBNS3")
 unique(ns_DOQ$Site)
 
-# Look at flags:
-# Flag 1 - "YES" indicates day of deployment or removal
-# Flag 2 - "YES" indicates poor miniDOT instrument function
-# Flag 3 - "YES" indicates poor miniwiper instrument function
-# Flag 4 - "YES" indicates suspected biofouling due to any of the above, photos, or general DO trends
 
-plot_w <-
-  ggplot(ns_DOW, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
+plot_w <- ggplot(ns_DOW, aes(x = datetime, y = do, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") + 
-  facet_grid(Site~.)
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12),
+        legend.position = "none") + 
+  facet_grid(Site ~ .)
+
 plot_w
-# ggsave(plot = plot_w, filename = paste("./24_LM_figures/24w_NF_DO.png",sep=""),width=10.5,height=12,dpi=300)
+# ggsave(plot = plot_w, filename = paste("./24_LM_figures/24w_NF_DO.png",sep=""),width=8,height=8,dpi=300)
 
 
-plot_e <-
-  ggplot(ns_DOE, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
+
+plot_w2 <- ggplot(ns_DOW, aes(x = datetime, y = do, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") + 
-  facet_grid(Site~.)
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+plot_w2
+
+# ggsave(plot = plot_w2, filename = paste("./24_LM_figures/24w_NF_DO_lumped.png",sep=""),width=8,height=3,dpi=300)
+
+
+
+plot_e <- ggplot(ns_DOE, aes(x = datetime, y = do, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12),
+        legend.position = "none") + 
+  facet_grid(Site ~ .)
+
 plot_e
-# ggsave(plot = plot_e, filename = paste("./24_LM_figures/24e_NF_DO.png",sep=""),width=10.5,height=12,dpi=300)
+# ggsave(plot = plot_e, filename = paste("./24_LM_figures/24e_NF_DO.png",sep=""),width=8,height=9,dpi=300)
 
 
-# # Filter non-flagged data
-ns_DOQ_f4 <- ns_DOW %>% filter(Flag4=="NO")
-ns_DOQ_f3 <- ns_DOQ_f4 %>% filter(Flag3=="NO")
-ns_DOQ_f2 <- ns_DOQ_f3 %>% filter(Flag2=="NO")
-ns_DOQ_f1 <- ns_DOQ_f2 %>% filter(Flag1=="NO")
-
-
-plot_wF <-
-  ggplot(ns_DOQ_f1, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
+plot_e2 <- ggplot(ns_DOE, aes(x = datetime, y = do, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") + 
-  facet_grid(Site~.)
-plot_wF
-# ggsave(plot = plot_wF, filename = paste("./24_LM_figures/24w_F_DO.png",sep=""),width=10.5,height=12,dpi=300)
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+plot_e2
+
+# ggsave(plot = plot_e2, filename = paste("./24_LM_figures/24e_NF_DO_lumped.png",sep=""),width=8,height=3,dpi=300)
 
 
 
-
-# # Filter non-flagged data
-ns_DOQ_f4 <- ns_DOE %>% filter(Flag4=="NO")
-ns_DOQ_f3 <- ns_DOQ_f4 %>% filter(Flag3=="NO")
-ns_DOQ_f2 <- ns_DOQ_f3 %>% filter(Flag2=="NO")
-ns_DOQ_f1 <- ns_DOQ_f2 %>% filter(Flag1=="NO")
-
-
-plot_eF <-
-  ggplot(ns_DOQ_f1, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
+plot_all <- ggplot(DO_dat, aes(x = datetime, y = do, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") + 
-  facet_grid(Site~.)
-plot_eF
-# ggsave(plot = plot_eF, filename = paste("./24_LM_figures/24e_F_DO.png",sep=""),width=10.5,height=12,dpi=300)
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+plot_all
 
-# think we need to filter data differently...
+# ggsave(plot = plot_all, filename = paste("./24_LM_figures/24_NF_DO_lumped.png",sep=""),width=8,height=3,dpi=300)
 
-
-## copying over 
-DOT_df5
-
-# select just the NS sites:
-ns_DOTW <- DOT_df5%>%
-  filter(Site=="BWNS1" | Site=="BWNS2" |Site=="BWNS3"|
-           Site=="SSNS1" |Site=="SSNS2" | Site=="SSNS3") 
-
-ns_DOTE <- DOT_df5%>%
-  filter(Site=="SHNS1" | Site=="SHNS2" | Site=="SHNS3" |
-           Site=="GBNS1" |Site=="GBNS2" |Site=="GBNS3")
-unique(ns_DOQ$Site)
-
-
-plot_temp <-
-  ggplot(ns_DOTW, aes(x=datetime, y=wtemp, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
+## temp:
+plot_wtemp <- ggplot(ns_DOW, aes(x = datetime, y = wtemp, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(Site~.)
-plot_temp
-# ggsave(plot = plot_temp, filename = paste("./24_LM_figures/24w_NF_temp.png",sep=""),width=10.5,height=12,dpi=300)
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12),
+        legend.position = "none") + 
+  facet_grid(Site ~ .)
+plot_wtemp
+# ggsave(plot = plot_wtemp, filename = paste("./24_LM_figures/24w_temp.png",sep=""),width=8,height=8,dpi=300)
 
 
-plote_temp <-
-  ggplot(ns_DOTE, aes(x=datetime, y=wtemp, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
+
+plot_w2temp <- ggplot(ns_DOW, aes(x = datetime, y = wtemp, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
   theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(Site~.)
-plote_temp
-# ggsave(plot = plote_temp, filename = paste("./24_LM_figures/24e_NF_temp.png",sep=""),width=10.5,height=12,dpi=300)
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+plot_w2temp
 
-names(DOT_df5)
+# ggsave(plot = plot_w2temp, filename = paste("./24_LM_figures/24w_temp_lumped.png",sep=""),width=8,height=3,dpi=300)
+
+
+
+plot_all_temp <- ggplot(DO_dat, aes(x = datetime, y = wtemp, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+plot_all_temp
+
+
+
+# ggsave(plot = plot_all_temp, filename = paste("./24_LM_figures/24_temp_lumped.png",sep=""),width=8,height=3,dpi=300)
+
+
+
+
+plot_etemp <- ggplot(ns_DOE, aes(x = datetime, y = wtemp, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12),
+        legend.position = "none") + 
+  facet_grid(Site ~ .)
+
+plot_etemp
+# ggsave(plot = plot_etemp, filename = paste("./24_LM_figures/24e_temp.png",sep=""),width=8,height=9,dpi=300)
+
+
+plot_e2temp <- ggplot(ns_DOE, aes(x = datetime, y = wtemp, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+plot_e2temp
+
+# ggsave(plot = plot_e2temp, filename = paste("./24_LM_figures/24e_temp_lumped.png",sep=""),width=8,height=3,dpi=300)
+
+
+
+
+plot_all_par_int <- ggplot(DO_dat, aes(x = datetime, y = par_int, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+plot_all_par_int
+# ggsave(plot = plot_all_par_int, filename = paste("./24_LM_figures/24_parInt_lumped.png",sep=""),width=8,height=3,dpi=300)
+
+
 
 plot_parint <-
   ggplot(DOT_df5, aes(x=datetime, y=par_int, colour = as.factor(Site))) +
@@ -368,13 +459,32 @@ plot_wsp <-
   geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
   labs(y = 'Wind sp (ms)', x=NULL) +
   theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
                    limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
   theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
         axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
         plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(shore~.)
 plot_wsp
-# ggsave(plot = plot_wsp, filename = paste("./24_LM_figures/24_NF_windsp.png",sep=""),width=10.5,height=10,dpi=300)
+# ggsave(plot = plot_wsp, filename = paste("./24_LM_figures/24_NF_windsp.png",sep=""),width=8,height=8,dpi=300)
+
+
+plot_wsp2 <-
+  ggplot(clim_dat, aes(x=datetime, y=windsp_ms, colour = as.factor(shore))) +
+  geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
+  labs(y = 'Wind sp (ms)', x=NULL) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12))# + theme(legend.position = "none") 
+plot_wsp2
+
+# ggsave(plot = plot_wsp2, filename = paste("./24_LM_figures/24_NF_windsp.png",sep=""),width=8,height=3,dpi=300)
+
+
 
 clim_dat$baro <- (clim_dat$baro_Pa*0.01)
 
@@ -383,13 +493,30 @@ plot_baro <-
   geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
   labs(y = 'Baro pressure (mmHg)', x=NULL) +
   theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(shore~.)
+plot_baro
+# ggsave(plot = plot_baro, filename = paste("./24_LM_figures/24_NF_baro.png",sep=""),width=8,height=8,dpi=300)
+
+
+
+plot_baro2 <-
+  ggplot(clim_dat, aes(x=datetime, y=baro, colour = as.factor(shore))) +
+  geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
+  labs(y = 'Baro pressure (mmHg)', x=NULL) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
                    limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
   theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
         axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
         plot.subtitle = element_text(size = 12)) #+ theme(legend.position = "none") +facet_grid(shore~.)
-plot_baro
-# ggsave(plot = plot_baro, filename = paste("./24_LM_figures/24_NF_baro.png",sep=""),width=12.5,height=4,dpi=300)
+plot_baro2
+# ggsave(plot = plot_baro2, filename = paste("./24_LM_figures/24_NF_baro2.png",sep=""),width=8,height=3,dpi=300)
 
 
 
@@ -406,6 +533,87 @@ plot <-
         plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(shore~.)
 plot
 
+
+
+
+
+plot_baro <-
+  ggplot(clim_dat, aes(x=datetime, y=baro, colour = as.factor(shore))) +
+  geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
+  labs(y = 'Baro pressure (mmHg)', x=NULL) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(shore~.)
+plot_baro
+# ggsave(plot = plot_baro, filename = paste("./24_LM_figures/24_NF_baro.png",sep=""),width=8,height=8,dpi=300)
+
+
+
+plot_baro2 <-
+  ggplot(clim_dat, aes(x=datetime, y=baro, colour = as.factor(shore))) +
+  geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
+  labs(y = 'Baro pressure (mmHg)', x=NULL) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) #+ theme(legend.position = "none") +facet_grid(shore~.)
+plot_baro2
+# ggsave(plot = plot_baro2, filename = paste("./24_LM_figures/24_NF_baro2.png",sep=""),width=8,height=3,dpi=300)
+
+
+
+plot_light <-
+  ggplot(clim_dat, aes(x=datetime, y=light, colour = as.factor(shore))) +
+  geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
+  labs(y = 'SWin (W/m2)', x=NULL) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(shore~.)
+plot_light
+# ggsave(plot = plot_light, filename = paste("./24_LM_figures/24_NF_light.png",sep=""),width=8,height=8,dpi=300)
+
+
+
+plot_light2 <-
+  ggplot(clim_dat, aes(x=datetime, y=light, colour = as.factor(shore))) +
+  geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
+  labs(y = 'SWin (W/m2)', x=NULL) +
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) #+ theme(legend.position = "none") +facet_grid(shore~.)
+plot_light2
+# ggsave(plot = plot_light2, filename = paste("./24_LM_figures/24_NF_light2.png",sep=""),width=8,height=3,dpi=300)
+
+
+
+
+
+plot <-
+  ggplot(clim_dat1, aes(x=datetime, y=windsp_ms, colour = as.factor(shore))) +
+  geom_point(alpha=0.4) + #geom_line(alpha=0.25)+
+  #labs(y = 'Baro pressure (mmHg)', x=NULL) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(shore~.)
+plot
 
 
 plot <-
