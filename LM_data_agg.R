@@ -26,161 +26,10 @@ source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
 ##==========================
 ## Read in DO data
 #===========================
-ns_DO <- readRDS("./RawData/NS_miniDOT/flagged_all_100423.rds")
-str(ns_DO)
-ns_DO <- ns_DO %>% 
-  mutate(datetime = as.POSIXct(Pacific_Standard_Time, format ="%Y-%m-%d %H:%M:%S")) %>%
-  with_tz(tz = "America/Los_Angeles") %>%
-  mutate(datetime = round_date(datetime, "5 mins"))
-
-# create matching column to line up data by site:
-ns_DO$Site <- paste(ns_DO$site, ns_DO$location, ns_DO$replicate, sep = "_")
-unique(ns_DO$Site)
-ns_DO$Site <- gsub("_3m_", "", ns_DO$Site)
-
-# select just the NS sites:
-ns_DOQ <- ns_DO%>%
-  filter(Site=="BWNS1" | Site=="BWNS2" |Site=="BWNS3"|
-           Site=="SSNS1" |   Site=="SSNS2" |   Site=="SSNS3" | 
-           Site=="SHNS1" | Site=="SHNS2" | Site=="SHNS3" |
-           Site=="GBNS1" |Site=="GBNS2" |Site=="GBNS3")
-unique(ns_DOQ$Site)
-
-# Look at flags:
-# Flag 1 - "YES" indicates day of deployment or removal
-# Flag 2 - "YES" indicates poor miniDOT instrument function
-# Flag 3 - "YES" indicates poor miniwiper instrument function
-# Flag 4 - "YES" indicates suspected biofouling due to any of the above, photos, or general DO trends
-
-# # Filter non-flagged data
-# ns_DOQ_f4 <- ns_DOQ %>% filter(Flag4=="NO")
-# ns_DOQ_f3 <- ns_DOQ_f4 %>% filter(Flag3=="NO")
-# ns_DOQ_f2 <- ns_DOQ_f3 %>% filter(Flag2=="NO")
-# ns_DOQ_f1 <- ns_DOQ_f2 %>% filter(Flag1=="NO")
-
-# For "NF" data:
-ns_DOQ_f1 <- ns_DOQ %>% filter(Flag1=="NO")
-ns_DOQ_f2 <- ns_DOQ_f1 %>% filter(Flag2=="NO")
-
-
-plot_f2 <-
-  ggplot(ns_DOQ_f2, aes(x=datetime, y=Dissolved_O_mg_L, colour = as.factor(Site))) +
-  geom_point(alpha=0.1) + geom_line(alpha=0.25)+
-  #labs(y = 'light dat', x=NULL) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10),
-        axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
-        plot.subtitle = element_text(size = 12)) #+ theme(legend.position = "none") + facet_grid(Name~.)
-plot_f2
-
-# Might still need to trim back data for odd values:
-# zoom in plotly
-library(plotly)
-
-# select just the NS sites:
-ns_DOQ<- as.data.frame(ns_DOQ_f2)
-str(ns_DOQ)
-summary(ns_DOQ)
-range(ns_DOQ$datetime)
-
-# 
-# Create the plot using plot_ly
-NS_plot <- plot_ly(data = ns_DOQ, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'markers',  color = ~Site) %>%
-  layout(xaxis = list(title = "Date and Time"),
-         yaxis = list(title = "DO (mgL)"))
-
-# other weird outlier 
-# for just BWNS2 - battery issue: 
-## BWNS1:
-filtered_bwns1 <- ns_DOQ %>%
-  filter(Site == "BWNS1")  %>%
-  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00"))%>%
-  filter(datetime < as.POSIXct("2022-11-01 00:00:00") | datetime > as.POSIXct("2022-11-10 00:00:00"))%>%
-  filter(datetime < as.POSIXct("2023-05-26 00:00:00") | datetime > as.POSIXct("2023-06-02 00:00:00"))
-  
-
-## BWNS2:
-filtered_bwns2 <- ns_DOQ %>%
-  filter(Site == "BWNS2")  %>%
-  filter(datetime < as.POSIXct("2022-05-24 02:00:00") | datetime > as.POSIXct("2022-09-07 12:00:00")) %>%
-  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00")) %>%
-  filter(datetime < as.POSIXct("2023-05-19 22:00:00") | datetime > as.POSIXct("2023-05-20 04:00:00"))
-
-## BWNS3
-filtered_bwns3 <- ns_DOQ %>%
-  filter(Site == "BWNS3")  %>%
-  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00")) %>%
-  filter(datetime < as.POSIXct("2023-03-15 10:00:00") | datetime > as.POSIXct("2023-05-25 02:00:00"))
-
-# GBNS1
-filtered_gbns1 <- ns_DOQ %>%
-  filter(Site == "GBNS1")  %>%
-  filter(datetime < as.POSIXct("2022-03-11 20:00:00") | datetime > as.POSIXct("2022-05-24 02:00:00")) %>%
-  filter(datetime < as.POSIXct("2022-12-08 20:00:00") | datetime > as.POSIXct("2023-02-05 02:00:00")) %>%
-  filter(datetime < as.POSIXct("2023-07-19 20:00:00") | datetime > as.POSIXct("2023-07-20 23:00:00"))
-
-##GBNS2
-filtered_gbns2 <- ns_DOQ %>%
-  filter(Site == "GBNS2")  %>%
-  filter(datetime < as.POSIXct("2022-04-18 20:00:00") | datetime > as.POSIXct("2022-05-06 00:00:00")) %>%
-  filter(datetime < as.POSIXct("2022-04-18 20:00:00") | datetime > as.POSIXct("2022-05-06 00:00:00")) %>%
-  filter(datetime < as.POSIXct("2023-04-02 20:00:00") | datetime > as.POSIXct("2023-05-26 00:00:00"))
-
-## GBNS3
-filtered_gbns3 <- ns_DOQ %>%
-  filter(Site == "GBNS3")  %>%
-  filter(datetime < as.POSIXct("2023-03-10 20:00:00") | datetime > as.POSIXct("2023-05-26 00:00:00"))
-
-## SHNS1
-filtered_shns1 <- ns_DOQ %>%
-  filter(Site == "SHNS1")  %>%
-  filter(datetime < as.POSIXct("2023-02-21 20:00:00") | datetime > as.POSIXct("2023-05-26 00:00:00"))
-
-## SHNS2
-filtered_shns2 <- ns_DOQ %>%
-  filter(Site == "SHNS2")  %>%
-  filter(datetime < as.POSIXct("2023-05-02 20:00:00") | datetime > as.POSIXct("2023-05-04 20:00:00"))
-
-## SHNS3
-filtered_shns3 <- ns_DOQ %>%
-  filter(Site == "SHNS3")  %>%
-  filter(datetime < as.POSIXct("2023-07-25 00:00:00") | datetime > as.POSIXct("2023-07-27 00:00:00")) 
-
-## SSNS1
-filtered_SSNS1 <- ns_DOQ %>%
-  filter(Site == "SSNS1")  %>%
-  filter(datetime < as.POSIXct("2022-10-17 02:00:00") | datetime > as.POSIXct("2022-10-25 02:00:00"))
-
-filtered_SSNS2 <- ns_DOQ %>%
-  filter(Site == "SSNS2")  
-
-
-Filterdat <- rbind(filtered_bwns1, filtered_bwns2, filtered_bwns3, 
-                   filtered_gbns1, filtered_gbns2, filtered_gbns3,
-                   filtered_shns1, filtered_shns2, filtered_shns3,
-                   filtered_SSNS1, filtered_SSNS2)
-
-
-NS_plot <- plot_ly(data = Filterdat, x = ~datetime, y = ~Dissolved_O_mg_L, type = 'scatter',  mode = 'markers',  color = ~Site) %>%
-  layout(xaxis = list(title = "Date and Time"),
-         yaxis = list(title = "DO (mgL)"))
-
+Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_flitedDO.rds") %>%
+  mutate(date = as.Date(datetime)) 
 str(Filterdat)
-Filterdat <- Filterdat%>%
-  mutate(shore = case_when( # create broad variable to lineup climate and DO dat
-    site == "BWNS2" ~ "BW", 
-    site == "BWNS1" ~ "BW", 
-    site == "BWNS3" ~ "BW", 
-    site == "SHNS2" ~ "SH",
-    site == "SHNS1" ~ "SH",
-    site == "SHNS3" ~ "SH",
-    site == "SSNS2" ~ "SS",
-    site == "SSNS1" ~ "SS",
-    site == "GBNS2" ~ "GB",
-    site == "GBNS1" ~ "GB",
-    site == "GBNS3" ~ "GB",
-    TRUE ~ as.character(site)))
-  
+
 ##==========================
 ## Read in climate data
 #===========================
@@ -225,11 +74,6 @@ clim_dat<- clim_dat %>%
 summary(clim_dat)
 str(clim_dat)
 
-####
-## STOP MAKE SURE DATA IS MERGING AND INFILLING
-## BW looks better nor but we maybe just make sure 
-##
-
 
 ##===============================
 ## Merge DO and in climate data
@@ -267,33 +111,75 @@ DOT_df <- NS_dat %>%
     mutate(o2_sat=do.obs/do_eq) %>%
     mutate(wspeed = wind.scale.base(windsp_ms, wnd.z = 10)) # height of anemometer (Units: meters)/ here NLDAS range coverage
 
-##==============================================
-## Attenuation estimations (and extrapolations)
-#===============================================
-# read in light dat:
-PAR_dat <- read.csv("./RawData/benthic_light/PAR_calc_dat.csv") %>%
-  mutate(date = as.Date(date)) %>%
-  dplyr::select(shore, date, Kd_fill, PAR_ave1, depth_cor, par_int_3m)
-
+## Add in some more joining date parameters
 DOT_df$year <- lubridate::year(DOT_df$datetime)
 DOT_df$yday <- lubridate::yday(DOT_df$datetime)
 DOT_df$hour <- lubridate::hour(DOT_df$datetime)
 DOT_df$date <- as.Date(DOT_df$datetime)
-  
+
+
+##==============================================
+## Attenuation estimations (and extrapolations)
+##===============================================
+## read in light dat:
+PAR_dat <- readRDS("./RawData/benthic_light/PAR_calc_dat.rds") %>%
+  dplyr::select(shore, date, Kd_fill, PAR_ave1, sensor_depth, par_int_3m)
+
+## join DO and benthic par data:
 DOT_df1 <- left_join(DOT_df, PAR_dat, by=c("date", "shore"))
 
-summary(DOT_df1)
+## quick check 
+PAR_int_plot_3m <- ggplot(DOT_df1, aes(x = date, y = par_int_3m, color=shore)) +
+  geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme_bw() + theme(legend.position = "bottom") 
+
+## infill the random NA
+DOT_df2<- DOT_df1 %>%
+  dplyr::group_by(shore)%>%
+  fill(Kd_fill,.direction = "down")%>%
+  fill(PAR_ave1,.direction = "down")%>% 
+  fill(sensor_depth,.direction = "down")%>% 
+  fill(par_int_3m,.direction = "down")%>% 
+  dplyr::ungroup()
+
+summary(DOT_df2)
+## rotate in random infilled variables to check 
+DOT_df2_plt <- ggplot(DOT_df2, aes(x = date, y = sensor_depth, color=shore)) +
+  geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme_bw() + theme(legend.position = "bottom") 
+
+##================================================
+## add in real z for sensor depth "real_NS_depth"
+##================================================
+depth_dat <- readRDS("./RawData/RBR\ profiles/24NS_depth_dat.rds") %>%
+  dplyr::rename(real_NS_depth = sensor_depth) %>%
+  dplyr::select(shore, Site, date, real_NS_depth) 
+
+# join in 
+DOT_df3 <-DOT_df2%>%
+  left_join(depth_dat, by=c("date", "Site", "shore"))
+summary(DOT_df3)
+
+DOT_df2_plt <- ggplot(DOT_df3, aes(x = date, y = real_NS_depth, color=shore)) +
+  geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme_bw() + theme(legend.position = "bottom") 
+
+# infill some missing values 
+DOT_df4<- DOT_df3 %>%
+  dplyr::group_by(Site)%>%
+  fill(real_NS_depth,.direction = "down")%>%
+  dplyr::ungroup()
+
+##===================
+## columns to save 
+##===================
 ## columns to save 
 ## do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
 
-DOT_df4 <- DOT_df1%>%
-  dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int_3m)
+DOT_df5 <- DOT_df4%>%
+  dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int_3m, z=real_NS_depth)
 
-
-# add in accurate depth changes based on 3m initial placement:
-DOT_df4$z<- c(3+DOT_df4$depth_cor)
-
-summary(DOT_df4)
+summary(DOT_df5)
 
 names(DOT_df4)
 DOT_df5 <- DOT_df4 %>%
@@ -304,7 +190,6 @@ summary(DOT_df5)
 ##===============================
 ## Export and save data:
 #================================
-
 
 ## separate out downloads by site:
 Export_csvs <- function(data, outputPath = "./") {
@@ -327,5 +212,5 @@ Export_csvs <- function(data, outputPath = "./") {
 
 
 # save
-# Export_csvs(DOT_df5, outputPath = "./FinalInputs/NonFiltered/")
+# Export_csvs(DOT_df5, outputPath = "./FinalInputs/")
 
