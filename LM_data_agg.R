@@ -30,6 +30,7 @@ Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_flitedDO.rds") %>%
   mutate(date = as.Date(datetime)) 
 str(Filterdat)
 
+Filterdat <- as.data.frame(Filterdat)
 ##==========================
 ## Read in climate data
 #===========================
@@ -125,6 +126,8 @@ DOT_df$date <- as.Date(DOT_df$datetime)
 PAR_dat <- readRDS("./RawData/benthic_light/PAR_calc_dat.rds") %>%
   dplyr::select(shore, date, Kd_fill, PAR_ave1, sensor_depth, par_int_3m)
 
+PAR_dat <- as.data.frame(PAR_dat)
+
 ## join DO and benthic par data:
 DOT_df1 <- left_join(DOT_df, PAR_dat, by=c("date", "shore"))
 
@@ -155,14 +158,26 @@ depth_dat <- readRDS("./RawData/RBR\ profiles/24NS_depth_dat.rds") %>%
   dplyr::rename(real_NS_depth = sensor_depth) %>%
   dplyr::select(shore, Site, date, real_NS_depth) 
 
-# join in 
-DOT_df3 <-DOT_df2%>%
-  left_join(depth_dat, by=c("date", "Site", "shore"))
-summary(DOT_df3)
+depth_dat <- as.data.frame(depth_dat)
+str(depth_dat)
+names(depth_dat)
+names(DOT_df2)
+str(DOT_df2)
+
+DOT_df2<- as.data.frame(DOT_df2)
+
+# Remove duplicates from depth_dat
+depth_dat_unique <- distinct(depth_dat, Site, date, shore, .keep_all = TRUE)
+
+# Perform the left join
+DOT_df3 <- left_join(DOT_df2, depth_dat_unique, by = c("Site", "date", "shore"))
+
 
 DOT_df2_plt <- ggplot(DOT_df3, aes(x = date, y = real_NS_depth, color=shore)) +
   geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   theme_bw() + theme(legend.position = "bottom") 
+
+summary(DOT_df3)
 
 # infill some missing values 
 DOT_df4<- DOT_df3 %>%
@@ -212,5 +227,5 @@ Export_csvs <- function(data, outputPath = "./") {
 
 
 # save
-# Export_csvs(DOT_df5, outputPath = "./FinalInputs/")
+# Export_csvs(DOT_df5, outputPath = "./FinalInputs/Filtered")
 

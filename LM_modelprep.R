@@ -46,7 +46,7 @@ out.time.period <- "60 min"
 tz <-  "US/Pacific"
 
 # read in clean data:
-sonde = list.files(paste("./FinalInputs/NonFiltered",sep=""), full.names = T) %>%
+sonde = list.files(paste("./FinalInputs/Filtered/",sep=""), full.names = T) %>%
   lapply(read_csv) %>%
   bind_rows()
 if(lake == "lake_id") sonde <- sonde %>% drop_na(datetime)
