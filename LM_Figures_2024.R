@@ -627,3 +627,343 @@ plot <-
         axis.title.x = element_text(size = 12),axis.title.y = element_text(size = 12),
         plot.subtitle = element_text(size = 12)) + theme(legend.position = "none") +facet_grid(Site~.)
 plot
+
+
+#=============================================
+## Read in DO data - for decision making plot 
+#==============================================
+Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_flitedDO.rds") %>%
+  mutate(date = as.Date(datetime)) 
+str(Filterdat)
+#
+ns_DOQ <- as.data.frame(Filterdat)
+ns_DOQ1 <- distinct(ns_DOQ, Site, datetime, shore, .keep_all = TRUE)
+
+
+####
+# depth_dat <- readRDS("./RawData/RBR\ profiles/24NS_depth_dat.rds") %>%
+#   dplyr::rename(real_NS_depth = sensor_depth) %>%
+#   dplyr::select(shore, Site, date, real_NS_depth) 
+
+# depth_dat_unique <- distinct(depth_dat, Site, date, shore, .keep_all = TRUE)
+
+# depth_dat_unique <- distinct(depth_dat, Site, date, shore, .keep_all = TRUE)
+# ns_DOQ1 <- left_join(ns_DOQ, depth_dat_unique, by = c("Site", "date", "shore"))
+
+depnotes <- read.csv("./RawData/RBR\ profiles/SensorMetaNotes.csv") %>%
+  mutate(date = as.Date(date))%>%
+  mutate(shore = case_when( # create broad variable to lineup climate and DO dat
+    site == "BWNS2" ~ "BW", 
+    site == "BWNS1" ~ "BW", 
+    site == "BWNS3" ~ "BW", 
+    site == "SHNS2" ~ "SH",
+    site == "SHNS1" ~ "SH",
+    site == "SHNS3" ~ "SH",
+    site == "SSNS2" ~ "SS",
+    site == "SSNS1" ~ "SS",
+    site == "GBNS2" ~ "GB",
+    site == "GBNS1" ~ "GB",
+    site == "GBNS3" ~ "GB",
+    TRUE ~ as.character(site)))
+
+depnotes$time <- c("11:00:00")
+
+depnotes$datetime <- as.POSIXct(paste(depnotes$date, depnotes$time), format="%Y-%m-%d %H:%M:%S")
+
+str(depnotes)
+
+depnotes<- depnotes%>%
+  dplyr::rename(Site ="site")
+
+###
+Dec_plot <- ggplot(ns_DOQ, aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+Dec_plot
+
+depnotes_long <- depnotes %>%
+  pivot_longer(cols = download:deployed, names_to = "event", values_to = "value", names_prefix = "") %>%
+  filter(value == 1) %>%
+  arrange(datetime, Site)
+
+## adding an hour to stagger lines on plot:
+
+# Assuming depnotes_long is your tibble
+depnotes_long1 <- depnotes_long %>%
+  group_by(Site, datetime) %>%
+  mutate(
+    time_offset = (row_number() - 1) * 24,  # Adjust the offset here (e.g., 2 for 2-hour offset)
+    datetime = datetime + lubridate::hours(time_offset)
+  ) %>%
+  ungroup() %>%
+  select(-time_offset)
+
+###
+Dec_plot_BW <- ggplot(ns_DOQ1%>% filter(shore=="BW"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + facet_grid(Site~.)
+# Add vertical lines for each event date with different line types
+p2_BW <- Dec_plot_BW +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1 %>% filter(shore=="BW"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))+
+  facet_grid(Site~.)
+
+
+###
+Dec_plot_GB <- ggplot(ns_DOQ1%>% filter(shore=="GB"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + facet_grid(Site~.)
+# Add vertical lines for each event date with different line types
+p2_GB <- Dec_plot_GB +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1%>%filter(shore=="GB"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))+
+  facet_grid(Site~.)
+
+
+
+###
+Dec_plot_SH <- ggplot(ns_DOQ1%>% filter(shore=="SH"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + facet_grid(Site~.)
+# Add vertical lines for each event date with different line types
+p2_SH <- Dec_plot_SH +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1%>%filter(shore=="SH"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))+
+  facet_grid(Site~.)
+
+
+
+###
+Dec_plot_SS <- ggplot(ns_DOQ1%>% filter(shore=="SS"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) + facet_grid(Site~.)
+# Add vertical lines for each event date with different line types
+p2_SS <- Dec_plot_SS +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1%>%filter(shore=="SS"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))+
+  facet_grid(Site~.)
+
+
+
+
+dec_grid <- ggarrange(
+  p2_BW,
+  p2_SS,
+  p2_GB,
+  p2_SH,
+  nrow = 4,
+  common.legend = TRUE # Use "none" to remove the legend entirely
+)
+
+dec_grid
+
+# ggsave(plot = dec_grid, filename = paste("./24_LM_figures/NS24_decision_.png",sep=""),width=8,height=10,dpi=300)
+# 
+
+
+## V2 ## 
+
+###
+Dec_plot_BW <- ggplot(ns_DOQ1%>% filter(shore=="BW"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12))
+# Add vertical lines for each event date with different line types
+p2_BW <- Dec_plot_BW +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1 %>% filter(shore=="BW"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))
+
+
+###
+Dec_plot_GB <- ggplot(ns_DOQ1%>% filter(shore=="GB"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12))
+# Add vertical lines for each event date with different line types
+p2_GB <- Dec_plot_GB +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1%>%filter(shore=="GB"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))
+
+
+
+###
+Dec_plot_SH <- ggplot(ns_DOQ1%>% filter(shore=="SH"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+# Add vertical lines for each event date with different line types
+p2_SH <- Dec_plot_SH +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1%>%filter(shore=="SH"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))
+
+
+###
+Dec_plot_SS <- ggplot(ns_DOQ1%>% filter(shore=="SS"), aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+  geom_point(alpha = 0.1) + 
+  #geom_line(alpha = 0.25) +
+  theme_bw() +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) 
+# Add vertical lines for each event date with different line types
+p2_SS <- Dec_plot_SS +
+  geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_long1%>%filter(shore=="SS"), 
+             color = "grey25", alpha = 0.8) +
+  scale_linetype_manual(values = c("download" = "solid", "cleaned" = "dotted", "copper" = "dashed", "paint" = "longdash", "deployed" = "solid"))
+
+
+
+dec_grid <- ggarrange(
+  p2_BW,
+  p2_SS,
+  p2_GB,
+  p2_SH,
+  nrow = 4,
+  common.legend = TRUE # Use "none" to remove the legend entirely
+)
+
+dec_grid
+
+# ggsave(plot = dec_grid, filename = paste("./24_LM_figures/NS24_decision2_.png",sep=""),width=8,height=8,dpi=300)
+# 
+
+# 
+# # Filter data to include only the unique site-datetime combinations for each event
+# depnotes_filtered <- depnotes %>%
+#   filter(download == 1 | cleaned == 1 | copper == 1 | paint == 1 | deployed == 1) %>%
+#   pivot_longer(cols = download:deployed, names_to = "event", values_to = "value") %>%
+#   filter(value == 1)
+# 
+# # Add vertical lines for each event date with different line types
+# p2 <- Dec_plot +
+#   geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_filtered, 
+#              color = "red", alpha = 0.8) +
+#   scale_linetype_manual(values = c("download" = "dashed", "cleaned" = "dotted", "copper" = "solid", "paint" = "longdash", "deployed" = "twodash")) +
+#   facet_grid(shore~.)
+# 
+# p2
+# 
+# # ggsave(plot = p2, filename = paste("./24_LM_figures/NS24_decision_.png",sep=""),width=8,height=3,dpi=300)
+# 
+# 
+# library(ggplot2)
+# library(dplyr)
+# library(tidyr)
+# 
+# # Assuming ns_DOQ1 contains your data
+# library(ggplot2)
+# library(dplyr)
+# library(tidyr)
+# 
+# # Filter data to include only the unique site-datetime combinations for each event
+# depnotes_filtered <- depnotes %>%
+#   filter(download == 1 | cleaned == 1 | copper == 1 | paint == 1 | deployed == 1) %>%
+#   pivot_longer(cols = download:deployed, names_to = "event", values_to = "value") %>%
+#   filter(value == 1)
+# 
+# # Iterate through each site
+# for(site in unique(ns_DOQ1$site)) {
+#   # Subset data for the current site
+#   site_data <- ns_DOQ1 %>% filter(site == .data$site)
+#   
+#   # Create a plot for the current site
+#   site_plot <- ggplot(site_data, aes(x = datetime, y = Dissolved_O_mg_L, colour = shore)) +
+#     geom_point(alpha = 0.1) + 
+#     theme_bw() +
+#     scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+#                      limits = c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+ 
+#     scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+#     theme(axis.text.x = element_text(size = 10), 
+#           axis.text.y = element_text(size = 10),
+#           axis.title.x = element_text(size = 12),
+#           axis.title.y = element_text(size = 12),
+#           plot.subtitle = element_text(size = 12)) +
+#     ggtitle(paste("Site:", site)) +  # Title with site name
+#     geom_vline(aes(xintercept = datetime, linetype = event), data = depnotes_filtered %>% filter(site == site), 
+#                color = "red", alpha = 0.8) +
+#     scale_linetype_manual(values = c("download" = "dashed", "cleaned" = "dotted", "copper" = "solid", "paint" = "longdash", "deployed" = "twodash")) 
+#   
+#   # Print the plot
+#   print(site_plot)
+# }
