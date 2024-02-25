@@ -66,7 +66,7 @@ data <- data %>%
   mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
   ungroup() %>%
   mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
-  mutate(z = ifelse(z>=4,4,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
+  mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
 
 # determine data frequency obs/day
 freq <- calc.freq(data$datetime) # needs to be 24
@@ -80,7 +80,7 @@ data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
 
 if(lake == lake) { 
   data <- data %>% 
-    mutate(k = ifelse(z<4,0,k)) #Note from Lotting--We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
+    mutate(k = ifelse(z<4.5,0,k)) #Note from Lotting--We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
 }
 
 # quick plot to check: 
@@ -129,10 +129,10 @@ ggplot(sonde_check,aes(x=datetime,y=do)) + geom_point(size=0.2) + geom_line() + 
 # export prepared data
 if(length(years) == 1) {
   sonde_check %>%
-    write_csv(paste("./ModelInputMeta/NF/sonde_dat_",lake,"_",years,".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",years,".csv",sep =""))
 } else {
   sonde_check %>%
-    write_csv(paste("./ModelInputMeta/NF/sonde_dat_",lake,"_",min(years),"_",max(years),".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",min(years),"_",max(years),".csv",sep =""))
 }
 
 
@@ -176,11 +176,11 @@ n_years = length(days_per_year)
 if(length(years)>1) {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/NF/",lake,"_",min(years),"_",max(years),"_sonde_list.R",sep=""))
+             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_sonde_list.R",sep=""))
 } else {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/NF/",lake,"_",years,"_sonde_list.R",sep=""))
+             file=paste("./ModelInputs/F/",lake,"_",years,"_sonde_list.R",sep=""))
 }
 
 

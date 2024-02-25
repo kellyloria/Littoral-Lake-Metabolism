@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "GBNS2" # check to site
+lake <- "BWNS2" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -38,7 +38,7 @@ options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
 
 # read data
-data <- read_rdump(paste("./ModelInputs/NF/",lake,"_",min(year),"_",max(year),"_sonde_list.R",sep=""))
+data <- read_rdump(paste("./ModelInputs/F/",lake,"_",min(year),"_",max(year),"_sonde_list.R",sep=""))
 
 # set reference temperature
 data$temp_ref <- c(mean(data$temp))
@@ -87,7 +87,7 @@ check_energy(stanfit)
 ## Export model fit
 ##==================================
 # export path
-output_path <- paste0("./ModelOutput/NF/")
+output_path <- paste0("./ModelOutput/F/")
 # save model full output
 saveRDS(stanfit, paste0(output_path,"/",lake,"_fit.rds"))
 
@@ -106,7 +106,7 @@ fit_clean <- fit_summary %>%
 ##==================================
 # * CHECK THIS FILE NAME 
 
-sonde_data <- read_csv(paste("./ModelInputMeta/NF/","sonde_dat_",lake,"_",min(year),"_",max(year),".csv",sep=""))
+sonde_data <- read_csv(paste("./ModelInputMeta/F/","sonde_dat_",lake,"_",min(year),"_",max(year),".csv",sep=""))
 
 
 out <- fit_clean %>%
@@ -143,6 +143,9 @@ write_csv(fit_clean, paste0(output_path,"/",lake,"_","_summary_clean.csv"))
 ## Plot model results
 ##==================================
 #plot primary parameters
+
+figure_path <- paste0("./Figures/F/")
+
 p1 <- fit_clean %>%  
   filter(name=="b0" | name == "r" | name == "i0" ) %>% 
   rename(unique_day = index) %>% 
@@ -150,11 +153,11 @@ p1 <- fit_clean %>%
   ggplot(aes(x=yday,y=middle,color=factor(year))) + 
   geom_point(size=0.5) +
   geom_line(alpha=0.5) +
-  facet_wrap(vars(name),ncol=1,scales="free_y") +
+  facet_wrap(vars(name, year),ncol=3,scales="free_y") +
   theme_bw() +
   labs(y="Mean Estimated Value",color="year",x="Day of Year")
 p1
-# ggsave(plot = p1,filename = paste("D:/IADO/UNR/NoahPPR/modelAlder3M/graphics/castle_2015_2019.png",sep=""),width=11,height=8.5,dpi=300)
+# ggsave(plot = p1,filename = paste0(figure_path,"/",lake,"_","_parameter_fit.jpeg"),width=9,height=6,dpi=300)
 
 #plot time series of estimates
 p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
@@ -167,9 +170,8 @@ p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
   scale_fill_manual(values = c("dodgerblue","firebrick","black")) +
   theme_bw() +
   labs(y=expression(mmol~O[2]~m^-3~d^-1)) +
-  facet_wrap(vars(year))
+  facet_wrap(vars(year), ncol=3)
 p2
 
-figure_path <- paste0("./Figures/NF/")
 
-# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab_v2.jpeg"),width=18,height=4,dpi=300)
+# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab.jpeg"),width=9,height=3,dpi=300)
