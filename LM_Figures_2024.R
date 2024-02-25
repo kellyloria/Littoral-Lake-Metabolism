@@ -967,3 +967,118 @@ dec_grid
 #   # Print the plot
 #   print(site_plot)
 # }
+
+
+
+
+####
+### Wind mix from models:
+## load packages
+library(tidyverse)
+library(lubridate)
+library(LakeMetabolizer)
+library(rstan)
+library(patchwork)
+library(plotly)
+source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
+
+# lake morph:
+max_d <-  501 
+lake.area <- 496200000
+out.time.period <- "60 min"
+tz <-  "US/Pacific"
+
+# read in clean data:
+sonde = list.files(paste("./FinalInputs/Filtered/",sep=""), full.names = T) %>%
+  lapply(read_csv) %>%
+  bind_rows()
+unique(sonde$year)
+
+
+# Adjust data frame to relevant years
+years = c(2021,2022,2023)
+data <- sonde %>% filter(year %in% years)
+summary(data)
+
+# set conditions for mixing depth "z"
+data <- data %>% 
+  group_by(year,yday, Site) %>%
+  mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
+  ungroup() %>%
+  mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
+  mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
+
+# determine data frequency obs/day
+freq <- calc.freq(data$datetime) # needs to be 24
+
+# use lake metabolizer fxn to calculate gas exchange:
+data <- data %>% 
+  group_by(year,yday, Site) %>% #
+  filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
+  mutate(k600 = k.vachon.base(wnd = wspeed,lake.area = lake.area)) %>% #estimate K in m/day
+  mutate(kgas = k600.2.kGAS.base(k600 = k600,temperature = wtemp,gas = "O2")) %>%  #m/d
+  mutate(k = (kgas/freq)/z) 
+
+# quick plot to check: 
+
+K_plot <- ggplot(data, aes(colour = shore)) +
+  geom_point(aes(y=do,x=k), alpha = 0.1) + 
+  theme_bw() + facet_wrap(vars(Site),scales="free_x") +
+  geom_smooth(aes(y=do,x=k),method="lm")+
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12))+
+  labs(y = "obs DO (mgL)", x = "k (m/day)" , 
+       subtitle = "Final gas transfer velocity (k) normalized by observation frequency and mixing depth (z)")
+# ggsave(plot = K_plot, filename = paste("./24_LM_figures/NS24_gastransferv_K.png",sep=""),width=8,height=6,dpi=300)
+
+
+wpsd_plot <- ggplot(data, aes(colour = shore)) +
+  geom_point(aes(y=do,x=wspeed), alpha = 0.1) + 
+  theme_bw() + facet_wrap(vars(Site),scales="free_x") +
+  geom_smooth(aes(y=do,x=wspeed),method="lm")+
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12))+
+  labs(y = "obs DO (mgL)", x = "wind sp (m/sec)" , 
+       subtitle = "Wind speed and DO")
+# ggsave(plot = wpsd_plot, filename = paste("./24_LM_figures/NS24_windsp_DO.png",sep=""),width=8,height=6,dpi=300)
+
+
+
+wpsd_K_plot <- ggplot(data, aes(colour = shore)) +
+  geom_point(aes(y=k,x=wspeed), alpha = 0.1) + 
+  theme_bw() + facet_wrap(vars(Site),scales="free_x") +
+  geom_smooth(aes(y=k,x=wspeed),method="lm")+
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12))+
+  labs(y = "k (m/day)", x = "wind sp (m/sec)" , 
+       subtitle = "Final gas transfer velocity (k) and wind speed (m/s)")
+# ggsave(plot = wpsd_K_plot, filename = paste("./24_LM_figures/NS24_windsp_K.png",sep=""),width=8,height=6,dpi=300)
+
+
+
+KtimeS_plot <- ggplot(data, aes(colour = shore)) +
+  geom_point(aes(y=k,x=datetime), alpha = 0.1) + 
+  theme_bw() +
+  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
+  theme(axis.text.x = element_text(size = 10), 
+        axis.text.y = element_text(size = 10),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        plot.subtitle = element_text(size = 12)) +
+  scale_x_datetime(date_breaks = "3 month", date_labels = "%b-%y", 
+                   limits=c(as.POSIXct("2021-06-10 01:00:00"), as.POSIXct("2023-09-07 24:00:00")))+
+  facet_grid(shore~.) +
+  labs(x = NULL, y = "k (m/day)")
+# ggsave(plot = KtimeS_plot, filename = paste("./24_LM_figures/NS24_ktimesieries.png",sep=""),width=8,height=6,dpi=300)
