@@ -34,7 +34,6 @@ library(plotly)
 source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 
 ## Prepping 1 site at a time for added caution
-
 ##==================================
 ## Get and process clean data
 ##==================================
@@ -60,6 +59,9 @@ years = c(2021,2022,2023)
 data <- sonde %>% filter(year %in% years)
 summary(data)
 
+## Filter out wind speeds greater than 5 
+data <- data %>% filter(wspeed<=5)
+
 # set conditions for mixing depth "z"
 data <- data %>% 
   group_by(year,yday) %>%
@@ -78,14 +80,14 @@ data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
   mutate(k = (kgas/freq)/z) %>% #convert gas to T^-1
   select(-kgas,-k600,-obs)
 
-if(lake == lake) { 
-  data <- data %>% 
-    mutate(k = ifelse(z<4.5,0,k)) #Note from Lotting--We assume no DO exchange with the Atmosphere. All DO change is related to metabolism
-}
-
 # quick plot to check: 
 ggplot(data=data,aes(x=yday,y=do)) + geom_line() + facet_wrap(vars(year),scales="free_x") +
   geom_point(aes(x=yday,y=z),col="blue",size=0.2)
+
+
+# quick check of DO and gas exchange K:
+ggplot(data=data) + facet_wrap(vars(year),scales="free_x") +
+  geom_point(aes(x=do,y=k),col="blue",size=0.2)
 ggplotly()
 
 

@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "BWNS2" # check to site
+lake <- "GBNS2" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -173,5 +173,26 @@ p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
   facet_wrap(vars(year), ncol=3)
 p2
 
-
 # ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab.jpeg"),width=9,height=3,dpi=300)
+
+
+###
+###
+# Evaluate gas exchange:
+p3 <- fit_clean %>%  
+  filter(name=="x_pred") %>% 
+  rename(unique_day = index) %>% 
+  left_join(sonde_data %>% select(unique_day,yday,year) %>% distinct()) %>%
+  drop_na() %>%
+  ggplot(aes(x = yday, y = middle, color = factor(year))) + 
+  geom_point(size = 0.5) +
+  geom_hline(yintercept = 0, size = 0.3, color = "gray50") +
+  geom_line(alpha = 0.5) +
+  facet_wrap(vars(name, year), ncol = 3, scales = "free_y") +
+  theme_bw() +
+  labs(y = "Mean Estimated Value", color = "Year", x = "Day of Year", 
+       title = "Predicted Oxygen Concentration (mg m^-3)")  # Title added here
+
+p3
+# ggsave(plot = p3, filename = paste0(figure_path,"/",lake,"_","_daily_o2_pred.jpeg"),width=9,height=3,dpi=300)
+
