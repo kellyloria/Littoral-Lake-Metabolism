@@ -50,9 +50,13 @@ add_site_column <- function(file_name) {
 ## Start with non filtered modeled data:
 ##============================================
 # Specify the folder path:
-folder_path <- "./24_plotdata/NotFiltered"
+
+# folder_path <- "./24_plotdata/NotFiltered" # mac path
+folder_path <- "./ModelOutput/F/" # PC path
+
+
 # Get a list of CSV files in the folder
-csv_files <- list.files(folder_path, pattern = "__daily_full.csv$", full.names = TRUE)
+csv_files <- list.files(folder_path, pattern = "_nu_daily_full.csv$", full.names = TRUE)
 # Apply the function to each CSV file and store the results in a list
 processed_data_list <- lapply(csv_files, add_site_column)
 # Combine the list of data frames into a single data frame
@@ -1082,3 +1086,59 @@ KtimeS_plot <- ggplot(data, aes(colour = shore)) +
   facet_grid(shore~.) +
   labs(x = NULL, y = "k (m/day)")
 # ggsave(plot = KtimeS_plot, filename = paste("./24_LM_figures/NS24_ktimesieries.png",sep=""),width=8,height=6,dpi=300)
+
+
+
+## Look at ER and K
+str(LM_data)
+str(data)
+
+site_data <- data %>% filter(Site == "GBNS2") %>%
+  group_by(Site, date)%>%
+  summarise(k_daily = mean(k, na.rm=TRUE), 
+            DO_daily = mean(do, na.rm=TRUE))
+
+LM_data_pl <- left_join(LM_data, site_data)
+
+# Plot ER against date
+
+ER_plt <- ggplot(data = LM_data_pl %>% filter(name=="ER"),aes(k_daily , middle, color = name))+
+  geom_hline(yintercept = 0, size = 0.3, color = "gray50")+
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = name),
+              linetype = 0, alpha = 0.2)+ geom_point(alpha = 0.6)+
+  geom_smooth(method="lm",se=F) +
+  scale_color_manual(values = c("#982649" )) + # "#003F91", "#333333"
+  scale_fill_manual(values = c("#982649")) +
+  labs(y="Daily ER", x="Daily k") +  theme_bw()
+
+GPP_plt <- ggplot(data = LM_data_pl %>% filter(name=="GPP"),aes(k_daily , middle, color = name))+
+  geom_hline(yintercept = 0, size = 0.3, color = "gray50")+
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = name),
+              linetype = 0, alpha = 0.2)+ geom_point(alpha = 0.6)+
+  geom_smooth(method="lm",se=F) +
+  scale_color_manual(values = c("#003F91" )) + # "#003F91", "#333333"
+  scale_fill_manual(values = c("#003F91")) +
+  labs(y="Daily GPP", x="Daily k") +  theme_bw()
+
+
+
+k_grid <- ggarrange(
+  GPP_plt,
+  ER_plt,
+  nrow = 2,
+  common.legend = TRUE # Use "none" to remove the legend entirely
+)
+
+dec_grid
+
+# ggsave(plot = k_grid, filename = paste("./24_LM_figures/NS24_gasex_.png",sep=""),width=4,height=5,dpi=300)
+# 
+
+
+
+ggplot(site_data, aes(x = date, y = k)) +
+  
+  geom_point() +  # Add points
+  geom_smooth(method = "loess", se = FALSE) +  # Add smoothed line
+  labs(x = "Date", y = "Ecosystem Respiration (ER)", title = "Ecosystem Respiration Over Time")
+LM_data
