@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "GBNS2" # check to site
+lake <- "BWNS2" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -49,11 +49,11 @@ model_path <- paste0("./Littoral-Lake-Metabolism/stan/",model)
 
 # set sampler dependencies 
 chains <- 6 # was 6
-iter <-2500  #  test run 
-warmup <-5000
+iter <-5000  #  test run 
+warmup <-2500
 adapt_delta <- 0.85
 max_treedepth <- 15
-#thin <- 1
+thin <- 1
 data$sig_b0 <- 0.01 #pmax smoothing parameter
 data$sig_r <- 0.01  #respiration smoothing parameter
 data$sig_i0 <- 0.2  #light saturation smoothing parameter
@@ -64,8 +64,9 @@ data$sig_i0 <- 0.2  #light saturation smoothing parameter
 ##==================================
 sm <- stan_model(file = model_path)
 stanfit <- sampling(sm, data = data, chains = chains, cores = chains, iter = iter, warmup = min(iter*0.5,warmup),
-                control = list(adapt_delta = adapt_delta, max_treedepth = max_treedepth), 
-                seed=194838,save_warmup=FALSE)
+                    control = list(adapt_delta = adapt_delta, max_treedepth = max_treedepth), 
+                    seed=194838,thin = thin,save_warmup=FALSE)
+
 
 
 ##==================================
@@ -107,7 +108,7 @@ fit_clean <- fit_summary %>%
 # * CHECK THIS FILE NAME 
 
 sonde_data <- read_csv(paste("./ModelInputMeta/F/","sonde_dat_",lake,"_",min(year),"_",max(year),".csv",sep=""))
-
+ 
 
 out <- fit_clean %>%
   filter(name %in% c("GPP","ER","NEP")) %>%
@@ -194,7 +195,7 @@ p3
 
 
 # Evaluate gas exchange:
-p3 <- fit_clean %>%  
+p4 <- fit_clean %>%  
   filter(name=="nu_generated") %>% 
   rename(unique_day = index) %>% 
   left_join(sonde_data %>% select(unique_day,yday,year) %>% distinct()) %>%
@@ -208,12 +209,12 @@ p3 <- fit_clean %>%
   labs(y = "Mean Estimated Value", color = "Year", x = "Day of Year", 
        title = "Predicted Oxygen Concentration (mg m^-3)")  # Title added here
 
-p3
-# ggsave(plot = p3, filename = paste0(figure_path,"/",lake,"_","_daily_o2_pred.jpeg"),width=9,height=3,dpi=300)
+p4
+# ggsave(plot = p4, filename = paste0(figure_path,"/",lake,"_","_daily_nu_gen_pred.jpeg"),width=9,height=3,dpi=300)
 
 
 ##
-##
+## optional 
 ##
 
 # DOUBLE check gas transfer 
@@ -241,9 +242,8 @@ for (n in 1:data$n_obs) {
 
 # Now x_obs, x_eq, lambda, and nu contain the results
 
-hist(n)
-summary(n)
-
+hist(nu)
+summary(nu)
 
 nu <- data$k* (x_eq - x_obs) # Atmospheric exchange equation
 
