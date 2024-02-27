@@ -26,7 +26,7 @@ source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
 ##==========================
 ## Read in DO data
 #===========================
-Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_flitedDO.rds") %>%
+Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_flitedDO_GB1.rds") %>% 
   mutate(date = as.Date(datetime)) 
 str(Filterdat)
 
@@ -135,6 +135,7 @@ DOT_df1 <- left_join(DOT_df, PAR_dat, by=c("date", "shore"))
 PAR_int_plot_3m <- ggplot(DOT_df1, aes(x = date, y = par_int_3m, color=shore)) +
   geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   theme_bw() + theme(legend.position = "bottom") 
+PAR_int_plot_3m
 
 ## infill the random NA
 DOT_df2<- DOT_df1 %>%
@@ -196,8 +197,8 @@ DOT_df5 <- DOT_df4%>%
 
 summary(DOT_df5)
 
-names(DOT_df4)
-DOT_df5 <- DOT_df4 %>%
+# select relevant columns:
+DOT_df6 <- DOT_df5 %>%
   dplyr::select(Site, do, wtemp, year, yday, hour, do_eq, o2_sat, par, wspeed, z, par_int, datetime)
 
 summary(DOT_df5)
@@ -227,5 +228,5 @@ Export_csvs <- function(data, outputPath = "./") {
 
 
 # save
-# Export_csvs(DOT_df5, outputPath = "./FinalInputs/Filtered")
+# Export_csvs(DOT_df6, outputPath = "./FinalInputs/Filtered")
 
