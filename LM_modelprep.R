@@ -37,10 +37,10 @@ source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "GBNS2"
-lake_id <- "GBNS2"
-max_d <-  501 
-lake.area <- 496200000
+lake <- "GBNS1"
+lake_id <- "GBNS1"
+max_d <-  160  #/3
+lake.area <- 165400000 # /3
 out.time.period <- "60 min"
 tz <-  "US/Pacific"
 
@@ -66,9 +66,8 @@ data <- data %>% filter(wspeed<=5)
 data <- data %>% 
   group_by(year,yday) %>%
   mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
-  ungroup() %>%
-  mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
-  mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
+  ungroup() #%>% mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
+ # mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
 
 # determine data frequency obs/day
 freq <- calc.freq(data$datetime) # needs to be 24
@@ -88,7 +87,7 @@ ggplot(data=data,aes(x=yday,y=do)) + geom_line() + facet_wrap(vars(year),scales=
 # quick check of DO and gas exchange K:
 ggplot(data=data) + facet_wrap(vars(year),scales="free_x") +
   geom_point(aes(x=do,y=k),col="blue",size=0.2)
-ggplotly()
+# ggplotly() # optional call for zoom in 
 
 
 ##==================================

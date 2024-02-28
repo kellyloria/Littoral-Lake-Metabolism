@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "BWNS2" # check to site
+lake <- "GBNS1" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -72,17 +72,17 @@ stanfit <- sampling(sm, data = data, chains = chains, cores = chains, iter = ite
 ##==================================
 ## Assess model fit
 ##==================================
+# specific summaries
+#check_n_eff(stanfit)
+#check_rhat(stanfit)
+check_div(stanfit)
+check_treedepth(stanfit,max_treedepth)
+check_energy(stanfit)
+
 
 fit_summary <- summary(stanfit, probs=c(0.025,0.5,0.975))$summary %>% 
   {as_tibble(.) %>%
       mutate(var = rownames(summary(stanfit)$summary))}
-
-# specific summaries
-check_n_eff(stanfit)
-check_rhat(stanfit)
-check_div(stanfit)
-check_treedepth(stanfit,max_treedepth)
-check_energy(stanfit)
 
 ##==================================
 ## Export model fit
@@ -190,7 +190,7 @@ p3 <- fit_clean %>%
   labs(y = "Mean Estimated Value", color = "Year", x = "Day of Year", 
        title = "Predicted Oxygen Concentration (mg m^-3)")  # Title added here
 p3
-# ggsave(plot = p3,filename = paste0(figure_path,"/",lake,"_","_nu_xpred_fit.jpeg"),width=9,height=6,dpi=300)
+# ggsave(plot = p3,filename = paste0(figure_path,"/",lake,"_","_nu_xpred_fit.jpeg"),width=9,height=3,dpi=300)
 
 
 
@@ -207,7 +207,7 @@ p4 <- fit_clean %>%
   facet_wrap(vars(name, year), ncol = 3, scales = "free_y") +
   theme_bw() +
   labs(y = "Mean Estimated Value", color = "Year", x = "Day of Year", 
-       title = "Predicted Oxygen Concentration (mg m^-3)")  # Title added here
+       title = "Scaled gas exchange as generated nu")  # Title added here
 
 p4
 # ggsave(plot = p4, filename = paste0(figure_path,"/",lake,"_","_daily_nu_gen_pred.jpeg"),width=9,height=3,dpi=300)
