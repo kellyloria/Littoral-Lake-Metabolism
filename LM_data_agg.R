@@ -26,7 +26,7 @@ source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
 ##==========================
 ## Read in DO data
 #===========================
-Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_flitedDO_GB1.rds") %>% 
+Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_metab_F_DO.rds") %>% 
   mutate(date = as.Date(datetime)) 
 str(Filterdat)
 
@@ -201,7 +201,7 @@ summary(DOT_df5)
 DOT_df6 <- DOT_df5 %>%
   dplyr::select(Site, do, wtemp, year, yday, hour, do_eq, o2_sat, par, wspeed, z, par_int, datetime)
 
-summary(DOT_df5)
+summary(DOT_df6)
 
 ##===============================
 ## Export and save data:
