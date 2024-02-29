@@ -52,24 +52,24 @@ DL_GLDAS <- function(save_dir, Site_ID, Lat, Lon, startDate, endDate){
 
 DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
   Site_ID = "BWNS2",
-  Lat = "39.10697",
-  Lon = "-120.15721",
+  Lat = "39.113185",
+  Lon = "-120.062018",
   startDate = "2021-01-01",
   endDate = "2023-11-01"
 )
 
 DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
   Site_ID = "SSNS2",
-  Lat = "39.13904",
-  Lon = "-120.15236",
+  Lat = "39.142064",
+  Lon = "-120.058892",
   startDate = "2021-01-01",
   endDate = "2023-11-01"
 )
 
 DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
   Site_ID = "SHNS2",
-  Lat = "39.0944",
-  Lon = "-119.9436",
+  Lat = "39.103443",
+  Lon = "-120.035747",
   startDate = "2021-01-01",
   endDate = "2023-11-01"
 )
@@ -77,8 +77,8 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
 
 DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
   Site_ID = "GBNS2",
-  Lat = "39.0880",
-  Lon = "-119.9421",
+  Lat = "39.088535",
+  Lon = "-120.033959",
   startDate = "2021-01-01",
   endDate = "2023-11-01"
 )
