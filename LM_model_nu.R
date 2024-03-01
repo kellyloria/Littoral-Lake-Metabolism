@@ -90,7 +90,7 @@ fit_summary <- summary(stanfit, probs=c(0.025,0.5,0.975))$summary %>%
 # export path
 output_path <- paste0("./ModelOutput/F/")
 # save model full output
-saveRDS(stanfit, paste0(output_path,"/",lake,"_nu_fit.rds"))
+saveRDS(stanfit, paste0(output_path,"/",lake,"_nusm_fit.rds"))
 
 fit_clean <- fit_summary %>%
   rename(lower = '2.5%', middle = `50%`,upper = '97.5%')  %>%
@@ -136,8 +136,8 @@ out3 <- rbind(out,out2)
 ## Export model results
 ##==================================
 
-write_csv(out3, paste0(output_path,"/",lake,"_","_nu_daily_full.csv"))
-write_csv(fit_clean, paste0(output_path,"/",lake,"_","_nu_summary_clean.csv"))
+write_csv(out3, paste0(output_path,"/",lake,"_","_nusm_daily_full.csv"))
+write_csv(fit_clean, paste0(output_path,"/",lake,"_","_nusm_summary_clean.csv"))
 
 ##==================================
 ## Plot model results
@@ -157,7 +157,7 @@ p1 <- fit_clean %>%
   theme_bw() +
   labs(y="Mean Estimated Value",color="year",x="Day of Year")
 p1
-# ggsave(plot = p1,filename = paste0(figure_path,"/",lake,"_","_nu_parameter_fit.jpeg"),width=9,height=6,dpi=300)
+# ggsave(plot = p1,filename = paste0(figure_path,"/",lake,"_","_nusm_parameter_fit.jpeg"),width=9,height=6,dpi=300)
 
 
 #plot time series of estimates
@@ -173,7 +173,7 @@ p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
   labs(y=expression(mmol~O[2]~m^-3~d^-1)) +
   facet_wrap(vars(year), ncol=3)
 p2
-# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_nu_daily_metab.jpeg"),width=9,height=3,dpi=300)
+# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_nusm_daily_metab.jpeg"),width=9,height=3,dpi=300)
 
 # Evaluate gas exchange:
 p3 <- fit_clean %>%  
@@ -190,7 +190,7 @@ p3 <- fit_clean %>%
   labs(y = "Mean Estimated Value", color = "Year", x = "Day of Year", 
        title = "Predicted Oxygen Concentration (mg m^-3)")  # Title added here
 p3
-# ggsave(plot = p3,filename = paste0(figure_path,"/",lake,"_","_nu_xpred_fit.jpeg"),width=9,height=3,dpi=300)
+# ggsave(plot = p3,filename = paste0(figure_path,"/",lake,"_","_nusm_xpred_fit.jpeg"),width=9,height=3,dpi=300)
 
 
 
@@ -210,7 +210,7 @@ p4 <- fit_clean %>%
        title = "Scaled gas exchange as generated nu")  # Title added here
 
 p4
-# ggsave(plot = p4, filename = paste0(figure_path,"/",lake,"_","_daily_nu_gen_pred.jpeg"),width=9,height=3,dpi=300)
+# ggsave(plot = p4, filename = paste0(figure_path,"/",lake,"_","_daily_nusm_gen_pred.jpeg"),width=9,height=3,dpi=300)
 
 
 ##

@@ -34,7 +34,7 @@ getwd()
 add_site_column <- function(file_name) {
   df <- read.csv(file_name)
   # Extract information from the file name:
-  site_info <- str_match(file_name, "([A-Za-z0-9_]+)__daily_full.csv")
+  site_info <- str_match(file_name, "([A-Za-z0-9_]+)__nu_daily_full.csv") # may have to remove nu
   # Check if there is a match and extract the relevant part from the match
   if (!is.null(site_info) && length(site_info) == 2) {
     site_name <- site_info[2]
@@ -56,7 +56,7 @@ folder_path <- "./ModelOutput/F/" # PC path
 
 
 # Get a list of CSV files in the folder
-csv_files <- list.files(folder_path, pattern = "_nu_daily_full.csv$", full.names = TRUE)
+csv_files <- list.files(folder_path, pattern = "__nu_daily_full.csv$", full.names = TRUE)
 # Apply the function to each CSV file and store the results in a list
 processed_data_list <- lapply(csv_files, add_site_column)
 # Combine the list of data frames into a single data frame
@@ -987,8 +987,8 @@ library(plotly)
 source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 
 # lake morph:
-max_d <-  501 
-lake.area <- 496200000
+max_d <-160 #501 
+lake.area <- 165400000#496200000
 out.time.period <- "60 min"
 tz <-  "US/Pacific"
 
@@ -1008,9 +1008,9 @@ summary(data)
 data <- data %>% 
   group_by(year,yday, Site) %>%
   mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
-  ungroup() %>%
-  mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
-  mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
+  ungroup() #%>%
+  #mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
+  #mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
 
 # determine data frequency obs/day
 freq <- calc.freq(data$datetime) # needs to be 24
@@ -1093,7 +1093,8 @@ KtimeS_plot <- ggplot(data, aes(colour = shore)) +
 str(LM_data)
 str(data)
 
-site_data <- data %>% filter(Site == "GBNS2") %>%
+site_data <- data %>% filter(Site == "GBNS2" |Site == "BWNS2" | 
+                               Site == "GBNS1" |Site == "BWNS1") %>%
   group_by(Site, date)%>%
   summarise(k_daily = mean(k, na.rm=TRUE), 
             DO_daily = mean(do, na.rm=TRUE))
@@ -1102,14 +1103,15 @@ LM_data_pl <- left_join(LM_data, site_data)
 
 # Plot ER against date
 
-ER_plt <- ggplot(data = LM_data_pl %>% filter(name=="ER"),aes(k_daily , middle, color = name))+
+ER_plt <- ggplot(data = LM_data_pl %>% filter(name=="ER"),aes(k_daily , (middle*-1), color = name))+
   geom_hline(yintercept = 0, size = 0.3, color = "gray50")+
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = name),
+  geom_ribbon(aes(ymin = (lower*-1), ymax = (upper*-1), fill = name),
               linetype = 0, alpha = 0.2)+ geom_point(alpha = 0.6)+
   geom_smooth(method="lm",se=F) +
   scale_color_manual(values = c("#982649" )) + # "#003F91", "#333333"
   scale_fill_manual(values = c("#982649")) +
-  labs(y="Daily ER", x="Daily k") +  theme_bw()
+  labs(y="Daily ER * -1", x="Daily k") +  theme_bw() +
+  facet_grid((site~.))
 
 GPP_plt <- ggplot(data = LM_data_pl %>% filter(name=="GPP"),aes(k_daily , middle, color = name))+
   geom_hline(yintercept = 0, size = 0.3, color = "gray50")+
@@ -1118,20 +1120,22 @@ GPP_plt <- ggplot(data = LM_data_pl %>% filter(name=="GPP"),aes(k_daily , middle
   geom_smooth(method="lm",se=F) +
   scale_color_manual(values = c("#003F91" )) + # "#003F91", "#333333"
   scale_fill_manual(values = c("#003F91")) +
-  labs(y="Daily GPP", x="Daily k") +  theme_bw()
+  labs(y="Daily GPP", x="Daily k") +  theme_bw() +
+  facet_grid((site~.))
 
 
 
 k_grid <- ggarrange(
   GPP_plt,
   ER_plt,
-  nrow = 2,
-  common.legend = TRUE # Use "none" to remove the legend entirely
+  ncol = 2,
+  legend =c("bottom"),
+  common.legend = F # Use "none" to remove the legend entirely
 )
 
-dec_grid
+k_grid
 
-# ggsave(plot = k_grid, filename = paste("./24_LM_figures/NS24_gasex_.png",sep=""),width=4,height=5,dpi=300)
+# ggsave(plot = k_grid, filename = paste("./24_LM_figures/NS24_gasex_.png",sep=""),width=5,height=6,dpi=300)
 # 
 
 

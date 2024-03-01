@@ -37,8 +37,8 @@ source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "GBNS1"
-lake_id <- "GBNS1"
+lake <- "BWNS1"
+lake_id <- "BWNS1"
 max_d <-  160  #/3
 lake.area <- 165400000 # /3
 out.time.period <- "60 min"
