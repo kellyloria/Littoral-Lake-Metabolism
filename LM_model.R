@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "GBNS2" # check to site
+lake <- "BWNS1" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -157,7 +157,9 @@ p1 <- fit_clean %>%
   theme_bw() +
   labs(y="Mean Estimated Value",color="year",x="Day of Year")
 p1
-# ggsave(plot = p1,filename = paste0(figure_path,"/",lake,"_","_parameter_fit.jpeg"),width=9,height=6,dpi=300)
+# 
+ggsave(plot = p1,filename = paste0(lake,"_","_parameter_fit.jpeg"),width=9,height=6,dpi=300)
+
 
 #plot time series of estimates
 p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+

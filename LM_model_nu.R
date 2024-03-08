@@ -32,6 +32,8 @@ source("./Littoral-Lake-Metabolism/stan_utility.R")
 
 lake <- "GBNS1" # check to site
 year <- c(2021,2022,2023)
+#year <- c(2023)
+
 
 # stan settings
 options(mc.cores = parallel::detectCores())
@@ -39,6 +41,11 @@ rstan_options(auto_write = TRUE)
 
 # read data
 data <- read_rdump(paste("./ModelInputs/F/",lake,"_",min(year),"_",max(year),"_sonde_list.R",sep=""))
+
+#data <- read_rdump(paste("./ModelInputs/F/",lake,"_",max(year),"_sonde_list.R",sep=""))
+
+str(data)
+
 
 # set reference temperature
 data$temp_ref <- c(mean(data$temp))
@@ -73,8 +80,8 @@ stanfit <- sampling(sm, data = data, chains = chains, cores = chains, iter = ite
 ## Assess model fit
 ##==================================
 # specific summaries
-#check_n_eff(stanfit)
-#check_rhat(stanfit)
+# check_n_eff(stanfit)
+# check_rhat(stanfit)
 check_div(stanfit)
 check_treedepth(stanfit,max_treedepth)
 check_energy(stanfit)

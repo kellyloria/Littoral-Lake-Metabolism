@@ -37,10 +37,10 @@ source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "BWNS1"
-lake_id <- "BWNS1"
-max_d <-  160  #/3
-lake.area <- 165400000 # /3
+lake <- "GBNS2"
+lake_id <- "GBNS2"
+max_d <-c(501/6)  #/3 - > even bigger shrink 160
+lake.area <- c(496200000/6) # /3 #165400000
 out.time.period <- "60 min"
 tz <-  "US/Pacific"
 
@@ -89,6 +89,7 @@ ggplot(data=data) + facet_wrap(vars(year),scales="free_x") +
   geom_point(aes(x=do,y=k),col="blue",size=0.2)
 # ggplotly() # optional call for zoom in 
 
+hist(data$k)
 
 ##==================================
 ## Prepare for data analysis
