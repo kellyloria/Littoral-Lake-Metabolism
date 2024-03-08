@@ -37,13 +37,13 @@ source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "SHNS1"
-lake_id <- "SHNS1"
+lake <- "SHNS2"
+lake_id <- "SHNS2"
 max_d <-  160  #/3
 lake.area <- 165400000 # /3
 out.time.period <- "60 min"
 tz <-  "US/Pacific"
-
+years = c(2022,2023)
 # read in clean data:
 sonde = list.files(paste("./FinalInputs/Filtered/",sep=""), full.names = T) %>%
   lapply(read_csv) %>%
@@ -54,13 +54,22 @@ unique(sonde$year)
 # Adjust to just site 
 sonde <- sonde %>% filter(Site %in% lake)
 
-# Adjust data frame to relevant years
-years = c(2023)
-data <- sonde %>% filter(year %in% years)
-summary(data)
+sonde_2022 <- sonde
+sonde_2023 <- sonde
 
+# Update year values for duplicated data
+sonde_2022$year <- 2022
+sonde_2023$year <- 2023
+
+sonde_2022$datetime <- sonde_2022$datetime - years(1)
+sonde_2023$datetime <- sonde_2023$datetime
+
+
+# Combine duplicated data with original data for 2023
+sonde_combined <- bind_rows(sonde_2022, sonde_2023)
 ## Filter out wind speeds greater than 5 
-data <- data %>% filter(wspeed<=5)
+data <- sonde_combined %>% filter(wspeed<=5)
+
 
 # set conditions for mixing depth "z"
 data <- data %>% 
@@ -137,6 +146,7 @@ if(length(years) == 1) {
 }
 
 
+
 ##==================================
 ## Package data for modeling
 ##==================================
@@ -173,6 +183,8 @@ n_series = length(obs_per_series)
 n_days = sum(days_per_year)
 n_years = length(days_per_year)
 
+
+
 # export as .R
 if(length(years)>1) {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
@@ -183,5 +195,3 @@ if(length(years)>1) {
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
              file=paste("./ModelInputs/F/",lake,"_",years,"_sonde_list.R",sep=""))
 }
-
-

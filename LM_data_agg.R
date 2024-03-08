@@ -230,3 +230,4 @@ Export_csvs <- function(data, outputPath = "./") {
 # save
 # Export_csvs(DOT_df6, outputPath = "./FinalInputs/Filtered")
 
+summary(DOT_df6)
