@@ -3,7 +3,7 @@
 #' data (w m-2) for a given Latitude and Longitude.
 #'
 #' @param read_dir The read directory for downloaded files. For example, "C:/myfolder
-#' @param Site_IDs Site name(s), for example "NC_UEno"
+#' @param Site_IDs Site name(s), for example "BWNS1"
 #' @param write_output Logical value indicating whether to write each individual driver
 #' file to disk. Default value is FALSE.
 #' @param save_dir Optional parameter when write_output = TRUE. The save directory
@@ -22,6 +22,7 @@
 # LIGHT
 # NLDAS:NLDAS_FORA0125_H.002:DSWRFsfc
 #===============================================================================
+# getwd()
 
 NLDAS_proc <- function(read_dir, Site_IDs, write_output = FALSE, save_dir = NULL) {
   # Get a list of all downloaded NLDAS data

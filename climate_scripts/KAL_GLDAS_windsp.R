@@ -11,7 +11,7 @@
 #' @export
 
 #===============================================================================
-#Function for downloading GLDAS pressure data from 2000 - 2022 via data rods
+#Function for downloading GLDAS "Wind_f_inst" data from 2000 - 2022 via data rods
 #https://disc.gsfc.nasa.gov/information/tools?title=Hydrology%20Data%20Rods
 #Created 12 December 2022
 #===============================================================================
@@ -45,7 +45,7 @@ DL_GLDAS <- function(save_dir, Site_ID, Lat, Lon, startDate, endDate){
 } #End DL_NLDAS function
 
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
+DL_GLDAS( "./RawData/NLDAS/GLDAS_windsp",
           Site_ID = "BWNS2",
           Lat = "39.10697",
           Lon = "-120.15721",
@@ -53,7 +53,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
           endDate = "2023-11-01"
 )
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
+DL_GLDAS( "./RawData/NLDAS/GLDAS_windsp",
           Site_ID = "SSNS2",
           Lat = "39.13904",
           Lon = "-120.15236",
@@ -61,7 +61,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
           endDate = "2023-11-01"
 )
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
+DL_GLDAS( "./RawData/NLDAS/GLDAS_windsp",
           Site_ID = "SHNS2",
           Lat = "39.0944",
           Lon = "-119.9436",
@@ -70,7 +70,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
 )
 
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
+DL_GLDAS( "./RawData/NLDAS/GLDAS_windsp",
           Site_ID = "GBNS2",
           Lat = "39.0880",
           Lon = "-119.9421",
@@ -82,7 +82,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_windsp",
 ## OFFSHORE ##
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  save_dir = "./RawData/NLDAS/Offshore/windsp/",
   Site_ID = "GB10m",
   Lat = "39.08836",
   Lon = "-119.9474",
@@ -92,7 +92,7 @@ DL_GLDAS(
 
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  save_dir = "./RawData/NLDAS/Offshore/windsp/",
   Site_ID = "GB15m", 
   Lat = "39.088485",
   Lon = "-119.948979",
@@ -101,7 +101,7 @@ DL_GLDAS(
 )
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  save_dir = "./RawData/NLDAS/Offshore/windsp/",
   Site_ID = "GB20m", 
   Lat = "39.088271",
   Lon = "-119.950734",
@@ -110,7 +110,7 @@ DL_GLDAS(
 )
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  save_dir = "./RawData/NLDAS/Offshore/windsp/",
   Site_ID = "BW10m", 
   Lat = "39.10629",
   Lon = "-120.15701",
@@ -119,7 +119,7 @@ DL_GLDAS(
 )
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/windsp/",
+  save_dir = "./RawData/NLDAS/Offshore/windsp/",
   Site_ID = "BW20m", 
   Lat = "39.106182", 
   Lon = "-120.156302",

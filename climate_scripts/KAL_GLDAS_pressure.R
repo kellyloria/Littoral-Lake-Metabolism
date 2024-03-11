@@ -11,7 +11,7 @@
 #' @export
 
 #===============================================================================
-#Function for downloading GLDAS pressure data from 2000 - 2022 via data rods
+#Function for downloading GLDAS pressure "Psurf_f_inst" data from 2000 - 2022 via data rods
 #https://disc.gsfc.nasa.gov/information/tools?title=Hydrology%20Data%20Rods
 #Created 12 December 2022
 #===============================================================================
@@ -50,7 +50,8 @@ DL_GLDAS <- function(save_dir, Site_ID, Lat, Lon, startDate, endDate){
 
 ## NEARSHORE
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
+# KAL path: ~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro
+DL_GLDAS( "./NLDAS/GLDAS_baro",
   Site_ID = "BWNS2",
   Lat = "39.113185",
   Lon = "-120.062018",
@@ -58,7 +59,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
   endDate = "2023-11-01"
 )
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
+DL_GLDAS( "./NLDAS/GLDAS_baro",
   Site_ID = "SSNS2",
   Lat = "39.142064",
   Lon = "-120.058892",
@@ -66,7 +67,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
   endDate = "2023-11-01"
 )
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
+DL_GLDAS( "./GLDAS_baro",
   Site_ID = "SHNS2",
   Lat = "39.103443",
   Lon = "-120.035747",
@@ -75,7 +76,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
 )
 
 
-DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
+DL_GLDAS( "./NLDAS/GLDAS_baro",
   Site_ID = "GBNS2",
   Lat = "39.088535",
   Lon = "-120.033959",
@@ -87,7 +88,7 @@ DL_GLDAS( "~/Documents/LittoralMetabModeling/RawData/NLDAS/GLDAS_baro",
 ## OFFSHORE ##
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/baro/",
+  save_dir = "./NLDAS/Offshore/baro/",
   Site_ID = "GB10m",
   Lat = "39.08836",
   Lon = "-119.9474",
@@ -97,7 +98,7 @@ DL_GLDAS(
 
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/baro/",
+  save_dir = "./NLDAS/Offshore/baro/",
   Site_ID = "GB15m", 
   Lat = "39.088485",
   Lon = "-119.948979",
@@ -106,7 +107,7 @@ DL_GLDAS(
 )
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/baro/",
+  save_dir = "./NLDAS/Offshore/baro/",
   Site_ID = "GB20m", 
   Lat = "39.088271",
   Lon = "-119.950734",
@@ -115,7 +116,7 @@ DL_GLDAS(
 )
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/baro/",
+  save_dir = "./NLDAS/Offshore/baro/",
   Site_ID = "BW10m", 
   Lat = "39.10629",
   Lon = "-120.15701",
@@ -124,7 +125,7 @@ DL_GLDAS(
 )
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/baro/",
+  save_dir = "./NLDAS/Offshore/baro/",
   Site_ID = "BW20m", 
   Lat = "39.106182", 
   Lon = "-120.156302",
@@ -137,7 +138,7 @@ DL_GLDAS(
 
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  save_dir = "./NLDAS/stream/baro/",
   Site_ID = "BWL", # 39.1075414	-120.1646811
   Lat = "39.1075414", 
   Lon = "-120.1646811",
@@ -148,7 +149,7 @@ DL_GLDAS(
 
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  save_dir = "./NLDAS/stream/baro/",
   Site_ID = "BWU", # 39.10533	-120.19551
   Lat = "39.10533", 
   Lon = "-120.19551",
@@ -159,7 +160,7 @@ DL_GLDAS(
 
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  save_dir = "./NLDAS/stream/baro/",
   Site_ID = "GBU", # 39.086755	-119.9316616
   Lat = "39.086755", 
   Lon = "-119.9316616",
@@ -169,7 +170,7 @@ DL_GLDAS(
 
 
 DL_GLDAS(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/baro/",
+  save_dir = "./NLDAS/stream/baro/",
   Site_ID = "GBL", # 39.0880435	-119.9389446
   Lat = "39.0880435", 
   Lon = "-119.9389446",

@@ -52,7 +52,7 @@ NLDAS_DL <- function(save_dir, Site_ID, Lat, Lon, startDate, endDate){
 
 ## NEARSHORE ##
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
+  save_dir = "./RawData/NLDAS/",
   Site_ID = "BWL",
   Lat = "39.1075",
   Lon = "-120.16468",
@@ -62,7 +62,7 @@ NLDAS_DL(
 
 # call dat for 1 site at time
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
+  save_dir = "./RawData/NLDAS/",
   Site_ID = "BWU",
   Lat = "39.1053",
   Lon = "-120.19551",
@@ -71,7 +71,7 @@ NLDAS_DL(
 )
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
+  save_dir = "./RawData/NLDAS/",
   Site_ID = "BWNS2",
   Lat = "39.10697",
   Lon = "-120.15721",
@@ -80,7 +80,7 @@ NLDAS_DL(
 )
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
+  save_dir = "./RawData/NLDAS/",
   Site_ID = "SSNS2",
   Lat = "39.13904",
   Lon = "-120.15236",
@@ -90,7 +90,7 @@ NLDAS_DL(
 
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
+  save_dir = "./RawData/NLDAS/",
   Site_ID = "SHNS2",
   Lat = "39.0944",
   Lon = "-119.9436",
@@ -100,7 +100,7 @@ NLDAS_DL(
 
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/",
+  save_dir = "./RawData/NLDAS/",
   Site_ID = "GBNS2",
   Lat = "39.0880",
   Lon = "-119.9421",
@@ -112,7 +112,7 @@ NLDAS_DL(
 # offshore sensors 
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  save_dir = "./NLDAS/Offshore/light/",
   Site_ID = "GB10m",
   Lat = "39.08836",
   Lon = "-119.9474",
@@ -122,7 +122,7 @@ NLDAS_DL(
 
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  save_dir = "./NLDAS/Offshore/light/",
   Site_ID = "GB15m", 
   Lat = "39.088485",
   Lon = "-119.948979",
@@ -131,7 +131,7 @@ NLDAS_DL(
 )
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  save_dir = "./NLDAS/Offshore/light/",
   Site_ID = "GB20m", 
   Lat = "39.088271",
   Lon = "-119.950734",
@@ -140,7 +140,7 @@ NLDAS_DL(
 )
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  save_dir = "./NLDAS/Offshore/light/",
   Site_ID = "BW10m", 
   Lat = "39.10629",
   Lon = "-120.15701",
@@ -149,7 +149,7 @@ NLDAS_DL(
 )
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/Offshore/light/",
+  save_dir = "./NLDAS/Offshore/light/",
   Site_ID = "BW20m", 
   Lat = "39.106182", 
   Lon = "-120.156302",
@@ -161,7 +161,7 @@ NLDAS_DL(
 ## streams
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  save_dir = "./NLDAS/stream/light/",
   Site_ID = "BWL", # 39.1075414	-120.1646811
   Lat = "39.1075414", 
   Lon = "-120.1646811",
@@ -172,7 +172,7 @@ NLDAS_DL(
 
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  save_dir = "./NLDAS/stream/light/",
   Site_ID = "BWU", # 39.10533	-120.19551
   Lat = "39.10533", 
   Lon = "-120.19551",
@@ -183,7 +183,7 @@ NLDAS_DL(
 
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  save_dir = "./NLDAS/stream/light/",
   Site_ID = "GBU", # 39.086755	-119.9316616
   Lat = "39.086755", 
   Lon = "-119.9316616",
@@ -193,7 +193,7 @@ NLDAS_DL(
 
 
 NLDAS_DL(
-  save_dir = "~/Documents/LittoralMetabModeling/RawData/NLDAS/stream/light/",
+  save_dir = "./NLDAS/stream/light/",
   Site_ID = "GBL", # 39.0880435	-119.9389446
   Lat = "39.0880435", 
   Lon = "-119.9389446",
