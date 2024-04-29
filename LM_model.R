@@ -30,7 +30,7 @@ library(patchwork)
 library(lubridate)
 source("./Littoral-Lake-Metabolism/stan_utility.R")
 
-lake <- "BWNS1" # check to site
+lake <- "GBNS2" # check to site
 year <- c(2021,2022,2023)
 
 # stan settings
@@ -42,18 +42,20 @@ data <- read_rdump(paste("./ModelInputs/F/",lake,"_",min(year),"_",max(year),"_s
 
 # set reference temperature
 data$temp_ref <- c(mean(data$temp))
+str(data)
 
 # call the stan based model
 model <- "o2_model_inhibition.stan" #Steele 2 param inhibition
 model_path <- paste0("./Littoral-Lake-Metabolism/stan/",model)
 
 # set sampler dependencies 
-chains <- 6 # was 6
-iter <-5000  #  test run 
-warmup <-2500
-adapt_delta <- 0.85
+## intercal - -0.30 from GBNS1 sensor 
+chains <- 4 # was 6
+iter <-10000  #  test run 
+warmup <-5000
+adapt_delta <- 0.95
 max_treedepth <- 15
-thin <- 1
+thin <- 10
 data$sig_b0 <- 0.01 #pmax smoothing parameter
 data$sig_r <- 0.01  #respiration smoothing parameter
 data$sig_i0 <- 0.2  #light saturation smoothing parameter
@@ -89,10 +91,10 @@ check_energy(stanfit)
 # export path
 output_path <- paste0("./ModelOutput/F/")
 # save model full output
-saveRDS(stanfit, paste0(output_path,"/",lake,"_fit.rds"))
+saveRDS(stanfit, paste0(output_path,"/",lake,"_6ms_fit.rds"))
 
 fit_clean <- fit_summary %>%
-  rename(lower = '2.5%', middle = `50%`,upper = '97.5%')  %>%
+ dplyr:: rename(lower = '2.5%', middle = `50%`,upper = '97.5%')  %>%
   mutate(name = strsplit(var, "\\[|\\]|,") %>% map_chr(~.x[1]),
          index = strsplit(var, "\\[|\\]|,") %>% map_int(~as.integer(.x[2])),
          day = ifelse(name %in% c("GPP","ER","NEP","AIR","Flux","GPP_m2","ER_m2","NEP_m2","b0","r","i0","b"), 
@@ -111,7 +113,7 @@ sonde_data <- read_csv(paste("./ModelInputMeta/F/","sonde_dat_",lake,"_",min(yea
 
 out <- fit_clean %>%
   filter(name %in% c("GPP","ER","NEP")) %>%
-  rename(unique_day = day) %>% 
+  dplyr::rename(unique_day = day) %>% 
   left_join(sonde_data %>% select(unique_day,yday,year) %>% distinct()) %>% 
   full_join(sonde_data %>% expand(year,yday,name=c("GPP","ER","NEP"))) %>% 
   mutate(middle = ifelse(name=="ER",-middle,middle),
@@ -121,7 +123,7 @@ out <- fit_clean %>%
 
 out2 <- fit_clean %>%
   filter(name %in% c("GPP_m2","ER_m2","NEP_m2"))%>%
-  rename(unique_day = day) %>% 
+  dplyr::rename(unique_day = day) %>% 
   left_join(sonde_data %>% select(unique_day,yday,year) %>% distinct()) %>% 
   full_join(sonde_data %>% expand(year,yday,name=c("GPP_m2","ER_m2","NEP_m2"))) %>% 
   mutate(middle = ifelse(name=="ER_m2",-middle,middle),
@@ -135,8 +137,8 @@ out3 <- rbind(out,out2)
 ## Export model results
 ##==================================
 
-write_csv(out3, paste0(output_path,"/",lake,"_","_daily_full.csv"))
-write_csv(fit_clean, paste0(output_path,"/",lake,"_","_summary_clean.csv"))
+write_csv(out3, paste0(output_path,"/",lake,"_","_daily_full_6ms.csv"))
+write_csv(fit_clean, paste0(output_path,"/",lake,"_","_summary_clean_6ms.csv"))
 
 
 ##==================================
@@ -148,17 +150,20 @@ figure_path <- paste0("./Figures/F/")
 
 p1 <- fit_clean %>%  
   filter(name=="b0" | name == "r" | name == "i0" ) %>% 
-  rename(unique_day = index) %>% 
+  dplyr::rename(unique_day = index) %>% 
   left_join(sonde_data %>% select(unique_day,yday,year) %>% distinct()) %>%
   ggplot(aes(x=yday,y=middle,color=factor(year))) + 
   geom_point(size=0.5) +
   geom_line(alpha=0.5) +
   facet_wrap(vars(name, year),ncol=3,scales="free_y") +
   theme_bw() +
-  labs(y="Mean Estimated Value",color="year",x="Day of Year")
+  labs(y="Mean Estimated Value",color="year",x="Day of Year") +
+  coord_cartesian(ylim = c(0, 0.35)) 
+  
+  
 p1
 # 
-ggsave(plot = p1,filename = paste0(lake,"_","_parameter_fit.jpeg"),width=9,height=6,dpi=300)
+# ggsave(plot = p1,filename = paste0(figure_path,"/",lake,"_","_parameter_fit_6ms.jpeg"),width=9,height=6,dpi=300)
 
 
 #plot time series of estimates
@@ -175,7 +180,7 @@ p2 <- ggplot(data = out %>% drop_na(year),aes(yday, middle, color = name))+
   facet_wrap(vars(year), ncol=3)
 p2
 
-# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab.jpeg"),width=9,height=3,dpi=300)
+# ggsave(plot = p2,filename = paste0(figure_path,"/",lake,"_","_daily_metab_6ms.jpeg"),width=9,height=3,dpi=300)
 
 
 ###
