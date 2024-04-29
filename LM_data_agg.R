@@ -124,7 +124,7 @@ DOT_df$date <- as.Date(DOT_df$datetime)
 ##===============================================
 ## read in light dat:
 PAR_dat <- readRDS("./RawData/benthic_light/PAR_calc_dat.rds") %>%
-  dplyr::select(shore, date, Kd_fill, PAR_ave1, sensor_depth, par_int_3m)
+  dplyr::select(shore, date, Kd_fill, PAR_ave1, sensor_depth, par_int)
 
 PAR_dat <- as.data.frame(PAR_dat)
 
@@ -132,10 +132,12 @@ PAR_dat <- as.data.frame(PAR_dat)
 DOT_df1 <- left_join(DOT_df, PAR_dat, by=c("date", "shore"))
 
 ## quick check 
-PAR_int_plot_3m <- ggplot(DOT_df1, aes(x = date, y = par_int_3m, color=shore)) +
+PAR_int_plot_3m <- ggplot(DOT_df1, aes(x = date, y = par_int, color=shore)) +
   geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   theme_bw() + theme(legend.position = "bottom") 
 PAR_int_plot_3m
+
+summary(DOT_df1)
 
 ## infill the random NA
 DOT_df2<- DOT_df1 %>%
@@ -143,14 +145,17 @@ DOT_df2<- DOT_df1 %>%
   fill(Kd_fill,.direction = "down")%>%
   fill(PAR_ave1,.direction = "down")%>% 
   fill(sensor_depth,.direction = "down")%>% 
-  fill(par_int_3m,.direction = "down")%>% 
+  fill(par_int,.direction = "down")%>% 
   dplyr::ungroup()
 
 summary(DOT_df2)
-## rotate in random infilled variables to check 
+## rotate in infilled variables to check 
 DOT_df2_plt <- ggplot(DOT_df2, aes(x = date, y = sensor_depth, color=shore)) +
   geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   theme_bw() + theme(legend.position = "bottom") 
+
+
+
 
 ##================================================
 ## add in real z for sensor depth "real_NS_depth"
@@ -193,7 +198,7 @@ DOT_df4<- DOT_df3 %>%
 ## do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
 
 DOT_df5 <- DOT_df4%>%
-  dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int_3m, z=real_NS_depth)
+  dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int, z=real_NS_depth)
 
 summary(DOT_df5)
 
