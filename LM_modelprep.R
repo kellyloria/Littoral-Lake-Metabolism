@@ -37,10 +37,10 @@ source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "BWNS1"
-lake_id <- "BWNS1"
-max_d <-c(501/3)  #/3 - > even bigger shrink 160
-lake.area <- c(496200000/3) # /3 #165400000
+lake <- "BWNS3"
+lake_id <- "BWNS3"
+max_d <-c(501/4)  #/3 - > even bigger shrink 160
+lake.area <- c(496200000/4) # /3 #165400000
 out.time.period <- "60 min"
 tz <-  "US/Pacific"
 
@@ -63,7 +63,7 @@ summary(data)
 data1 <- data %>% filter(wspeed<=5)
 data2 <- data1 %>% filter(wtemp>=4)
 
-summary(data2)
+summary(data2) 
 
 # set conditions for mixing depth "z"
 data <- data2 %>% 
@@ -79,7 +79,7 @@ freq <- calc.freq(data$datetime) # needs to be 24
 data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
   mutate(k600 = k.vachon.base(wnd = wspeed,lake.area = lake.area)) %>% #estimate K in m/day
   mutate(kgas = k600.2.kGAS.base(k600 = k600,temperature = wtemp,gas = "O2")) %>%  #m/d
-  mutate(k = (kgas/freq)/z) %>% #convert gas to T^-1
+  mutate(k = (kgas/c(24))/z) %>% #convert gas to T^-1
   select(-kgas,-k600,-obs)
 
 # quick plot to check: 
@@ -134,10 +134,10 @@ ggplot(sonde_check,aes(x=datetime,y=do)) + geom_point(size=0.2) + geom_line() + 
 # export prepared data
 if(length(years) == 1) {
   sonde_check %>%
-    write_csv(paste("./ModelInputMeta/F/sonde_datFv_",lake,"_",years,".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_5ms_fourthlake_Offset_",lake,"_",years,".csv",sep =""))
 } else {
   sonde_check %>%
-    write_csv(paste("./ModelInputMeta/F/sonde_datFv_",lake,"_",min(years),"_",max(years),".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_5ms_fourthlake_Offset_",lake,"_",min(years),"_",max(years),".csv",sep =""))
 }
 
 
@@ -145,7 +145,7 @@ if(length(years) == 1) {
 ## Package data for modeling
 ##==================================
 
-
+freq<- freq #c(24)
 # define variables in environment 
 o2_freq = freq;
 o2_obs = 1000*sonde_prep$do # convert to mg m^-3
@@ -181,11 +181,11 @@ n_years = length(days_per_year)
 if(length(years)>1) {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_Fv_sonde_list.R",sep=""))
+             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_5ms_fourthlake_Offset_sonde_list.R",sep=""))
 } else {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/F/",lake,"_",years,"_Fv_sonde_list.R",sep=""))
+             file=paste("./ModelInputs/F/",lake,"_",years,"_5ms_fourthlake_Offset_sonde_list.R",sep=""))
 }
 
 

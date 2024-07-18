@@ -22,15 +22,20 @@ lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
 
 source("./Littoral-Lake-Metabolism/saved_fxns/LM.o2.at.sat.R")
 source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
+source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
+
 
 ##==========================
 ## Read in DO data
 #===========================
-Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_metab_F_DO.rds") %>% 
+Filterdat <- readRDS("./RawData/NS_miniDOT/24_NS_metab_F_DO_offset.rds") %>% 
   mutate(date = as.Date(datetime)) 
 str(Filterdat)
 
 Filterdat <- as.data.frame(Filterdat)
+
+freq <- calc.freq(Filterdat$datetime) # needs to be 24
+
 ##==========================
 ## Read in climate data
 #===========================
@@ -82,16 +87,23 @@ str(clim_dat)
 # Left join climate to NS data:
 filtered_dat <- Filterdat %>%
   dplyr::select(shore,site,Site, datetime, Temperature_deg_C, 
-                Dissolved_O_mg_L, Dissolved_O_Saturation_perc)
+                Dissolved_Oxygen_offset, Dissolved_O_Saturation_perc)
 str(filtered_dat)
 
 filtered_datH <- filtered_dat %>%
   dplyr::group_by(Site, shore, datetime = floor_date(datetime, "hour")) %>%
-  dplyr::summarise(do.obs = mean(Dissolved_O_mg_L, na.rm = TRUE),
+  dplyr::summarise(do.obs = mean(Dissolved_Oxygen_offset, na.rm = TRUE),
                    wtr = mean(Temperature_deg_C, na.rm = TRUE)) 
+
+
+freq <- calc.freq(filtered_datH$datetime) # needs to be 24
+
 
 NS_dat <- filtered_datH %>%
   left_join(clim_dat, by = c("shore", "datetime"))
+
+freq <- calc.freq(NS_dat$datetime) # needs to be 24
+
 
 ##=====
 ## Temporary infill of climate data to allow for more accurate DO aggregation 
@@ -119,33 +131,56 @@ DOT_df$hour <- lubridate::hour(DOT_df$datetime)
 DOT_df$date <- as.Date(DOT_df$datetime)
 
 
+
+freq <- calc.freq(DOT_df$datetime) # needs to be 24
+
+
 ##==============================================
 ## Attenuation estimations (and extrapolations)
 ##===============================================
 ## read in light dat:
+
+### PAUSE HERE ###
 PAR_dat <- readRDS("./RawData/benthic_light/PAR_calc_dat.rds") %>%
-  dplyr::select(shore, date, Kd_fill, PAR_ave1, sensor_depth, par_int)
+  dplyr::select(shore, date, Kd_fill, in_par, sensor_depth, par_int_3m) 
+
+# Group by date and summarize to ensure only one observation per date
+PAR_dat_modified <- PAR_dat %>%
+  group_by(date, shore) %>%
+  summarize(
+    Kd_fill = mean(Kd_fill),  #
+    in_par = mean(in_par),    # 
+    sensor_depth = mean(sensor_depth),  # 
+    par_int_3m = mean(par_int_3m)  # 
+  )
+
+
+unique(PAR_dat$shore)
 
 PAR_dat <- as.data.frame(PAR_dat)
 
 ## join DO and benthic par data:
-DOT_df1 <- left_join(DOT_df, PAR_dat, by=c("date", "shore"))
+merged_df <- merge(DOT_df, PAR_dat_modified[, c("date", "shore", "par_int_3m", "Kd_fill", "in_par", "sensor_depth")], 
+                   by = c("date", "shore"), 
+                   all.x = TRUE) 
+
+freq <- calc.freq(merged_df$datetime) # needs to be 24
+
 
 ## quick check 
-PAR_int_plot_3m <- ggplot(DOT_df1, aes(x = date, y = par_int, color=shore)) +
+PAR_int_plot_3m <- ggplot(merged_df, aes(x = date, y = par_int_3m, color=shore)) +
   geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   theme_bw() + theme(legend.position = "bottom") 
 PAR_int_plot_3m
 
-summary(DOT_df1)
 
 ## infill the random NA
-DOT_df2<- DOT_df1 %>%
+DOT_df2<- merged_df %>%
   dplyr::group_by(shore)%>%
   fill(Kd_fill,.direction = "down")%>%
-  fill(PAR_ave1,.direction = "down")%>% 
+  fill(in_par,.direction = "down")%>% 
   fill(sensor_depth,.direction = "down")%>% 
-  fill(par_int,.direction = "down")%>% 
+  fill(par_int_3m,.direction = "down")%>% 
   dplyr::ungroup()
 
 summary(DOT_df2)
@@ -153,8 +188,6 @@ summary(DOT_df2)
 DOT_df2_plt <- ggplot(DOT_df2, aes(x = date, y = sensor_depth, color=shore)) +
   geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   theme_bw() + theme(legend.position = "bottom") 
-
-
 
 
 ##================================================
@@ -183,7 +216,7 @@ DOT_df2_plt <- ggplot(DOT_df3, aes(x = date, y = real_NS_depth, color=shore)) +
   geom_point(alpha = 0.75) +  scale_colour_manual(values = c(SS = "#136F63", BW = "#3283a8", GB = "#a67d17", SH = "#c76640")) +
   theme_bw() + theme(legend.position = "bottom") 
 
-summary(DOT_df3)
+summary(DOT_df4)
 
 # infill some missing values 
 DOT_df4<- DOT_df3 %>%
@@ -198,7 +231,7 @@ DOT_df4<- DOT_df3 %>%
 ## do	wtemp	year	yday	hour	do_eq	o2_sat	par	wspeed	z	par_int	datetime
 
 DOT_df5 <- DOT_df4%>%
-  dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int, z=real_NS_depth)
+  dplyr::rename(do=do.obs, wtemp= wtr, par_int = par_int_3m, z=real_NS_depth)
 
 summary(DOT_df5)
 
@@ -207,6 +240,10 @@ DOT_df6 <- DOT_df5 %>%
   dplyr::select(Site, do, wtemp, year, yday, hour, do_eq, o2_sat, par, wspeed, z, par_int, datetime)
 
 summary(DOT_df6)
+
+# determine data frequency obs/day
+freq <- calc.freq(DOT_df6$datetime) # needs to be 24
+
 
 ##===============================
 ## Export and save data:
@@ -225,7 +262,7 @@ Export_csvs <- function(data, outputPath = "./") {
   # Create and export CSV for each site
   for (siteName in names(siteDataList)) {
     siteData <- siteDataList[[siteName]]
-    fileName <- paste0(outputPath, siteName, "_data.csv")
+    fileName <- paste0(outputPath, siteName, "_data_Offset.csv")
     write.csv(siteData, file = fileName, row.names = FALSE)
     cat("CSV exported for Site:", siteName, "- File:", fileName, "\n")
   }
@@ -236,3 +273,9 @@ Export_csvs <- function(data, outputPath = "./") {
 # Export_csvs(DOT_df6, outputPath = "./FinalInputs/Filtered")
 
 summary(DOT_df6)
+
+
+DOT_df6_GBNS2 <- DOT_df6 %>%
+  filter(Site=="GBNS2")
+
+

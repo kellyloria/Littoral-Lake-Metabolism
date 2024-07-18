@@ -18,7 +18,7 @@ data {
   real<lower=0> wspeed[n_obs]; // wind speeed [m s^-1]
   real<lower=0> z[n_obs]; // mixing depth [m]
   real<lower=0> temp_ref; // reference temperature [C]
-  real<lower=0> k[n_obs]; // k value for gas exchange [h^-1] (viene calculado en los codigos individuales por año 2015, 2016 ...)
+  real<lower=0> k[n_obs]; // k value for gas exchange [h^-1]
   real<lower=0> o2_freq;
   real<lower=0> sig_b0;
   real<lower=0> sig_r;
