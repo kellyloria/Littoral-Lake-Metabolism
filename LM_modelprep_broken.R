@@ -33,19 +33,23 @@ library(patchwork)
 library(plotly)
 source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 
+## temp ##
+lapply(c("plyr","dplyr","ggplot2","cowplot","lubridate",
+         "tidyverse","data.table","xts","dygraphs",
+         "nrlmetab","cowplot"), require, character.only=T)
+
+source("./Littoral-Lake-Metabolism/saved_fxns/LM.o2.at.sat.R")
+source("./Littoral-Lake-Metabolism/saved_fxns/LM.wind.scale.R")
+
+
 ## Prepping 1 site at a time for added caution
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "BWNS3"
-lake_id <- "BWNS3"
-<<<<<<< HEAD
-max_d <-c(501/4)  #/3 - > even bigger shrink 160
-lake.area <- c(496200000/4) # /3 #165400000
-=======
-max_d <-c(501/3)  #/3 - > even bigger shrink 160
+lake <- "BWNS1"
+lake_id <- "BWNS1"
+max_d <-c(501)  #/3 - > even bigger shrink 160
 lake.area <- c(496200000/3) # /3 #165400000
->>>>>>> dd6a562865cace0b9ebecf8b25b1369d51e42ee8
 out.time.period <- "60 min"
 tz <-  "US/Pacific"
 
@@ -64,22 +68,35 @@ years = c(2021,2022,2023)
 data <- sonde %>% filter(year %in% years)
 summary(data)
 
-## Filter out wind speeds greater than 5 
-data <- data %>% filter(wspeed<=5.9)
-#   Temperature = (4 to 35)
-data <- data %>% filter(wtemp>=4)
+## quick check 
+check_plt <- ggplot(data, aes(x = datetime, y = do , color=Site)) +
+  geom_line(alpha = 0.75)+ theme_bw() + theme(legend.position = "bottom") 
+check_plt
 
-<<<<<<< HEAD
-summary(data2) 
-=======
->>>>>>> dd6a562865cace0b9ebecf8b25b1369d51e42ee8
+names(data)
+
+# 
+# ####
+# ###
+data1 <- data %>%
+  mutate(do = do + (-0.302047)) %>%
+  mutate(do_eq=o2.at.sat.base(temp = wtemp, baro=baro, altitude = 1897)) %>%  # Tahoe altitude in m  = 1897
+  mutate(o2_sat=do/do_eq) %>%
+  mutate(wspeed = wind.scale.base(wspeed, wnd.z = 10)) # height of anemometer (Units: meters)/ here NLDAS range coverage
+
+
+## Filter out wind speeds greater than 5 
+data2 <- data1 %>% filter(wspeed<=5.9)
+data3 <- data2 %>%
+  dplyr::select(Site, do, wtemp, year, yday, hour, do_eq, o2_sat, par, wspeed, z, par_int, datetime)
+
 
 # set conditions for mixing depth "z"
-data <- data %>% 
-  group_by(year,yday) %>%
+data <- data3 %>% 
+  dplyr::group_by(year,yday) %>%
   mutate(obs = sum(!is.na(do))) %>%       #identify and filter records that have < 23 hrs of data 
   ungroup() #%>% mutate(z = ifelse(z<=0.5,.5,z))%>% # can't have zero depth zmix
-# mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
+ # mutate(z = ifelse(z>=4.5,4.5,z))  #in littoral zone depth zmix can not be deeper than the littoral depth
 
 # determine data frequency obs/day
 freq <- calc.freq(data$datetime) # needs to be 24
@@ -88,7 +105,7 @@ freq <- calc.freq(data$datetime) # needs to be 24
 data <- data %>% filter(obs>=(freq-(freq/24*2))) %>% #allow for 2 hours
   mutate(k600 = k.vachon.base(wnd = wspeed,lake.area = lake.area)) %>% #estimate K in m/day
   mutate(kgas = k600.2.kGAS.base(k600 = k600,temperature = wtemp,gas = "O2")) %>%  #m/d
-  mutate(k = (kgas/c(24))/z) %>% #convert gas to T^-1
+  mutate(k = (kgas/freq)/z) %>% #convert gas to T^-1
   select(-kgas,-k600,-obs)
 
 # quick plot to check: 
@@ -106,12 +123,11 @@ hist(data$k)
 ##==================================
 ## Prepare for data analysis
 ##==================================
-
 # prepare data
 sonde_prep = data %>%
-  arrange(year, yday, hour) %>%
+  dplyr::arrange(year, yday, hour) %>%
   # for each year, create identifier for uninterrupted stretches of observations
-  group_by(year) %>%
+  dplyr::group_by(year) %>%
   mutate(i = ifelse(is.na(do)==T, 1, 0), 
          j = c(1,abs(diff(i)))) %>% 
   filter(is.na(do)==F) %>%
@@ -120,7 +136,7 @@ sonde_prep = data %>%
   # create unique index for each series
   # remove series with fewer than 24 observations
   mutate(unique_series = year + series/length(unique(series))) %>%
-  group_by(unique_series) %>%
+  dplyr::group_by(unique_series) %>%
   mutate(series_length = length(unique_series)) %>%
   ungroup() %>%
   # recreate series index and make unique index for days
@@ -129,7 +145,7 @@ sonde_prep = data %>%
   mutate(unique_series = as.factor(unique_series) %>% as.numeric(),
          unique_day = paste(year, yday) %>% as.factor() %>% as.numeric(),
          index = 1:length(do),
-         par_int = ifelse(par_int==0,0.00001, par_int)) %>%
+         par_int = ifelse(par_int==0,0.0001, par_int)) %>%
   select(-i, -j) 
 
 # return missing observations for check
@@ -143,25 +159,20 @@ ggplot(sonde_check,aes(x=datetime,y=do)) + geom_point(size=0.2) + geom_line() + 
 # export prepared data
 if(length(years) == 1) {
   sonde_check %>%
-<<<<<<< HEAD
-    write_csv(paste("./ModelInputMeta/F/sonde_dat_5ms_fourthlake_Offset_",lake,"_",years,".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",years,"_intercal_6ms.csv",sep =""))
 } else {
   sonde_check %>%
-    write_csv(paste("./ModelInputMeta/F/sonde_dat_5ms_fourthlake_Offset_",lake,"_",min(years),"_",max(years),".csv",sep =""))
-=======
-    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",years,"_6ms.csv",sep =""))
-} else {
-  sonde_check %>%
-    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",min(years),"_",max(years),"_6ms.csv",sep =""))
->>>>>>> dd6a562865cace0b9ebecf8b25b1369d51e42ee8
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",min(years),"_",max(years),"_intercal_6ms.csv",sep =""))
 }
+
+summary(sonde_check)
 
 
 ##==================================
 ## Package data for modeling
 ##==================================
 
-freq<- freq #c(24)
+
 # define variables in environment 
 o2_freq = freq;
 o2_obs = 1000*sonde_prep$do # convert to mg m^-3
@@ -174,18 +185,18 @@ map_days = sonde_prep$unique_day
 k = sonde_prep$k
 if(length(years) == 1) {
   days_per_year = array(c({sonde_prep %>%
-      group_by(year) %>%
+      dplyr::group_by(year) %>%
       summarize(value = length(unique(unique_day)))}$value), dim = 1) #,dim = 1
 } else {
   days_per_year = array(c({sonde_prep %>%
-      group_by(year) %>%
+      dplyr::group_by(year) %>%
       summarize(value = length(unique(unique_day)))}$value)) #,dim = 1 
 }
 obs_per_series = c({sonde_prep %>%
-    group_by(unique_series) %>%
+    dplyr::group_by(unique_series) %>%
     summarize(value = length(unique_series))}$value) 
 obs_per_day = c({sonde_prep %>%
-    group_by(unique_day) %>%
+    dplyr::group_by(unique_day) %>%
     summarize(value = length(unique_day))}$value) 
 z = sonde_prep$z
 n_obs = length(o2_obs)
@@ -197,19 +208,11 @@ n_years = length(days_per_year)
 if(length(years)>1) {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-<<<<<<< HEAD
-             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_5ms_fourthlake_Offset_sonde_list.R",sep=""))
+             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_sonde_list_intercal_6ms.R",sep=""))
 } else {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/F/",lake,"_",years,"_5ms_fourthlake_Offset_sonde_list.R",sep=""))
-=======
-             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_sonde_list_6ms.R",sep=""))
-} else {
-  stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
-               "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/F/",lake,"_",years,"_sonde_list_6ms.R",sep=""))
->>>>>>> dd6a562865cace0b9ebecf8b25b1369d51e42ee8
+             file=paste("./ModelInputs/F/",lake,"_",years,"_sonde_list_intercal_6ms.R",sep=""))
 }
 
 

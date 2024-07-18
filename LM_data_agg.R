@@ -237,7 +237,7 @@ summary(DOT_df5)
 
 # select relevant columns:
 DOT_df6 <- DOT_df5 %>%
-  dplyr::select(Site, do, wtemp, year, yday, hour, do_eq, o2_sat, par, wspeed, z, par_int, datetime)
+  dplyr::select(Site, do, wtemp, year, yday, hour, do_eq, o2_sat, par, wspeed, z, par_int, datetime, baro)
 
 summary(DOT_df6)
 
