@@ -37,8 +37,8 @@ source("./Littoral-Lake-Metabolism/saved_fxns/helper_functions.r")
 ##==================================
 ## Get and process clean data
 ##==================================
-lake <- "SHNS2"
-lake_id <- "SHNS2"
+lake <- "SSNS2"
+lake_id <- "SSNS2"
 max_d <-  160  #/3
 lake.area <- 165400000 # /3
 out.time.period <- "60 min"
@@ -68,7 +68,9 @@ sonde_2023$datetime <- sonde_2023$datetime
 # Combine duplicated data with original data for 2023
 sonde_combined <- bind_rows(sonde_2022, sonde_2023)
 ## Filter out wind speeds greater than 5 
-data <- sonde_combined %>% filter(wspeed<=5)
+data <- sonde_combined %>% filter(wspeed<=5.9)
+data <- data %>% filter(wtemp>=4)
+summary(data)
 
 
 # set conditions for mixing depth "z"
@@ -139,10 +141,10 @@ ggplot(sonde_check,aes(x=datetime,y=do)) + geom_point(size=0.2) + geom_line() + 
 # export prepared data
 if(length(years) == 1) {
   sonde_check %>%
-    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",years,".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",years,"_6ms.csv",sep =""))
 } else {
   sonde_check %>%
-    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",min(years),"_",max(years),".csv",sep =""))
+    write_csv(paste("./ModelInputMeta/F/sonde_dat_",lake,"_",min(years),"_",max(years),"_6ms.csv",sep =""))
 }
 
 
@@ -189,9 +191,9 @@ n_years = length(days_per_year)
 if(length(years)>1) {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_sonde_list.R",sep=""))
+             file=paste("./ModelInputs/F/",lake,"_",min(years),"_",max(years),"_sonde_list_6ms.R",sep=""))
 } else {
   stan_rdump(c("o2_freq","o2_obs","o2_eq","light","temp","wspeed","map_days","obs_per_series","days_per_year",
                "obs_per_day", "z","k","n_obs","n_series","n_days","n_years"),
-             file=paste("./ModelInputs/F/",lake,"_",years,"_sonde_list.R",sep=""))
+             file=paste("./ModelInputs/F/",lake,"_",years,"_sonde_list_6ms.R",sep=""))
 }
