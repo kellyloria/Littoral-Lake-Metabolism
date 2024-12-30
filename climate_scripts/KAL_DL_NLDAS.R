@@ -53,7 +53,7 @@ NLDAS_DL <- function(save_dir, Site_ID, Lat, Lon, startDate, endDate){
 ## NEARSHORE ##
 NLDAS_DL(
   save_dir = "./RawData/NLDAS/",
-  Site_ID = "BWL",
+  Site_ID = "BWL_v2",
   Lat = "39.1075",
   Lon = "-120.16468",
   startDate = "2020-01-01",
